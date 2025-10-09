@@ -15,9 +15,9 @@ export default function FactCheckApp() {
     setLoading(true);
     
     try {
-      const prompt = \`당신은 팩트체크 전문가입니다. 다음 주장을 분석하고 JSON 형식으로 응답하세요.
+      const prompt = `당신은 팩트체크 전문가입니다. 다음 주장을 분석하고 JSON 형식으로 응답하세요.
 
-주장: "\${input}"
+주장: "${input}"
 
 분석 기준:
 - 신뢰할 수 있는 언론사, 유튜브 채널, SNS 계정 확인
@@ -63,7 +63,7 @@ export default function FactCheckApp() {
   },
   "warnings": ["주의사항1", "주의사항2"],
   "recommendations": "독자를 위한 권고사항"
-}\`;
+}`;
 
       const response = await fetch("/api/factcheck", {
         method: "POST",
@@ -172,11 +172,11 @@ export default function FactCheckApp() {
           <button
             onClick={analyzeContent}
             disabled={loading}
-            className={\`mt-4 w-full py-3 rounded-lg font-semibold text-white transition-colors \${
+            className={`mt-4 w-full py-3 rounded-lg font-semibold text-white transition-colors ${
               loading 
                 ? 'bg-gray-400 cursor-not-allowed' 
                 : 'bg-indigo-600 hover:bg-indigo-700'
-            }\`}
+            }`}
           >
             {loading ? '분석 중...' : '팩트체크 시작'}
           </button>
@@ -184,7 +184,7 @@ export default function FactCheckApp() {
 
         {result && (
           <div className="space-y-6">
-            <div className={\`rounded-lg shadow-lg p-6 border-2 \${getInfoTypeColor(result.infoType)}\`}>
+            <div className={`rounded-lg shadow-lg p-6 border-2 ${getInfoTypeColor(result.infoType)}`}>
               <div className="flex items-center gap-3 mb-4">
                 {getInfoTypeIcon(result.infoType)}
                 <h2 className="text-2xl font-bold">{result.infoTypeKorean}</h2>
@@ -200,11 +200,11 @@ export default function FactCheckApp() {
               <div className="flex items-center gap-4">
                 <div className="flex-1 bg-gray-200 rounded-full h-8">
                   <div 
-                    className={\`h-8 rounded-full flex items-center justify-center text-white font-bold \${
+                    className={`h-8 rounded-full flex items-center justify-center text-white font-bold ${
                       result.veracity >= 80 ? 'bg-green-500' :
                       result.veracity >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                    }\`}
-                    style={{ width: \`\${result.veracity}%\` }}
+                    }`}
+                    style={{ width: `${result.veracity}%` }}
                   >
                     {result.veracity}%
                   </div>
@@ -244,7 +244,7 @@ export default function FactCheckApp() {
                       <span className="text-sm font-bold text-indigo-600">{result.primaryMedia.distribution.mainstream}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-indigo-600 h-3 rounded-full" style={{ width: \`\${result.primaryMedia.distribution.mainstream}%\` }}></div>
+                      <div className="bg-indigo-600 h-3 rounded-full" style={{ width: `${result.primaryMedia.distribution.mainstream}%` }}></div>
                     </div>
                   </div>
                   <div>
@@ -253,7 +253,7 @@ export default function FactCheckApp() {
                       <span className="text-sm font-bold text-red-600">{result.primaryMedia.distribution.youtube}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-red-600 h-3 rounded-full" style={{ width: \`\${result.primaryMedia.distribution.youtube}%\` }}></div>
+                      <div className="bg-red-600 h-3 rounded-full" style={{ width: `${result.primaryMedia.distribution.youtube}%` }}></div>
                     </div>
                   </div>
                   <div>
@@ -262,7 +262,7 @@ export default function FactCheckApp() {
                       <span className="text-sm font-bold text-purple-600">{result.primaryMedia.distribution.sns}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-purple-600 h-3 rounded-full" style={{ width: \`\${result.primaryMedia.distribution.sns}%\` }}></div>
+                      <div className="bg-purple-600 h-3 rounded-full" style={{ width: `${result.primaryMedia.distribution.sns}%` }}></div>
                     </div>
                   </div>
                 </div>
@@ -284,7 +284,7 @@ export default function FactCheckApp() {
                     </div>
                     <div className="text-right min-w-[60px]">
                       <p className="text-xs text-gray-500">신뢰도</p>
-                      <p className={\`font-bold \${getVeracityColor(source.reliability)}\`}>
+                      <p className={`font-bold ${getVeracityColor(source.reliability)}`}>
                         {source.reliability}%
                       </p>
                     </div>
@@ -302,7 +302,7 @@ export default function FactCheckApp() {
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-gray-600 mb-1">신뢰도</p>
-                  <p className={\`font-bold text-xl \${getVeracityColor(result.mediaAnalysis.reliability)}\`}>
+                  <p className={`font-bold text-xl ${getVeracityColor(result.mediaAnalysis.reliability)}`}>
                     {result.mediaAnalysis.reliability}%
                   </p>
                 </div>
@@ -324,9 +324,9 @@ export default function FactCheckApp() {
                   
                   <div 
                     className="absolute top-3 transform -translate-x-1/2 transition-all duration-300"
-                    style={{ left: \`\${getBiasPosition(result.mediaAnalysis.biasScore)}%\` }}
+                    style={{ left: `${getBiasPosition(result.mediaAnalysis.biasScore)}%` }}
                   >
-                    <div className={\`w-6 h-6 rounded-full \${getBiasColor(result.mediaAnalysis.biasScore)} border-4 border-white shadow-lg\`}></div>
+                    <div className={`w-6 h-6 rounded-full ${getBiasColor(result.mediaAnalysis.biasScore)} border-4 border-white shadow-lg`}></div>
                     <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
                       <div className="bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-bold">
                         {result.mediaAnalysis.biasLabel}
@@ -411,7 +411,7 @@ export default function FactCheckApp() {
                 <span>AI가 신뢰할 수 있는 언론사, 유튜브 채널, SNS 계정을 분석합니다</span>
               </li>
               <li className="flex items-start gap-2">
-                <span class Name="text-indigo-600 font-bold">3.</span>
+                <span className="text-indigo-600 font-bold">3.</span>
                 <span>정보가 주로 어느 매체에서 나타나는지 확인하세요</span>
               </li>
               <li className="flex items-start gap-2">
