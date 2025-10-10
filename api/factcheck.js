@@ -13,14 +13,43 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { prompt } = req.body;
+  const { claim } = req.body;
 
-  if (!prompt) {
-    return res.status(400).json({ error: 'Prompt is required' });
+  if (!claim) {
+    return res.status(400).json({ error: 'Claim is required' });
   }
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // 1단계: 네이버 뉴스 검색
+    const newsResponse = await fetch(
+      `https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(claim)}&display=10&sort=date`,
+      {
+        headers: {
+          'X-Naver-Client-Id': process.env.NAVER_CLIENT_ID,
+          'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET
+        }
+      }
+    );
+
+    if (!newsResponse.ok) {
+      throw new Error('네이버 검색 API 오류');
+    }
+
+    const newsData = await newsResponse.json();
+    
+    // 검색 결과를 텍스트로 정리
+    const searchResults = newsData.items.map((item, idx) => {
+      const title = item.title.replace(/<[^>]*>/g, '');
+      const description = item.description.replace(/<[^>]*>/g, '');
+      
+      return `[출처 ${idx + 1}] ${title}
+설명: ${description}
+언론사: ${item.originallink || item.link}
+날짜: ${item.pubDate}`;
+    }).join('\n\n');
+
+    // 2단계: OpenAI로 팩트체크 분석
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -31,36 +60,57 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "system",
-            content: "당신은 팩트체크 전문가입니다. 주어진 정보를 분석하고 JSON 형식으로만 응답합니다."
+            content: `당신은 한국 정치 뉴스 팩트체크 전문가입니다. 
+제공된 네이버 뉴스 검색 결과를 바탕으로 주장을 검증하세요.
+
+반드시 다음 JSON 형식으로만 응답하세요:
+{
+  "verdict": "사실/거짓/부분적 사실/확인 불가",
+  "confidence": "높음/중간/낮음",
+  "summary": "한 문장 요약",
+  "details": "상세 분석 (여러 출처를 비교하여 설명)",
+  "sources": [
+    {
+      "title": "기사 제목",
+      "url": "URL",
+      "date": "날짜"
+    }
+  ],
+  "reasoning": "판단 근거"
+}`
           },
           {
             role: "user",
-            content: prompt
+            content: `검증할 주장: ${claim}
+
+네이버 뉴스 검색 결과:
+${searchResults}
+
+위 검색 결과를 바탕으로 이 주장을 팩트체크해주세요.`
           }
         ],
-        temperature: 0.7,
-        max_tokens: 4000,
+        temperature: 0.3,
+        max_tokens: 2000,
         response_format: { type: "json_object" }
       })
     });
 
-    if (!response.ok) {
-      const error = await response.json();
+    if (!aiResponse.ok) {
+      const error = await aiResponse.json();
       throw new Error(error.error?.message || 'OpenAI API 오류');
     }
 
-    const data = await response.json();
+    const aiData = await aiResponse.json();
     
-    const result = {
+    res.status(200).json({
       content: [
         {
           type: "text",
-          text: data.choices[0].message.content
+          text: aiData.choices[0].message.content
         }
       ]
-    };
-    
-    res.status(200).json(result);
+    });
+
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: error.message });
