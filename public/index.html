@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>팩트체크 앱</title>
+    <title>팩트체크 프로</title>
     <style>
         * {
             margin: 0;
@@ -15,9 +15,6 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
         
@@ -25,16 +22,23 @@
             background: white;
             border-radius: 20px;
             padding: 40px;
-            max-width: 800px;
-            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
         
         h1 {
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             text-align: center;
-            font-size: 32px;
+            font-size: 36px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
         }
         
         .search-box {
@@ -78,46 +82,6 @@
             cursor: not-allowed;
         }
         
-        .result {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            display: none;
-        }
-        
-        .result.show {
-            display: block;
-        }
-        
-        .verdict {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .verdict.true {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .verdict.false {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .verdict.partial {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .verdict.unknown {
-            background: #e2e3e5;
-            color: #383d41;
-        }
-        
         .loading {
             text-align: center;
             padding: 40px;
@@ -143,50 +107,336 @@
             100% { transform: rotate(360deg); }
         }
         
-        .details {
-            margin-top: 20px;
-            line-height: 1.8;
+        .result {
+            display: none;
         }
         
-        .sources {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
+        .result.show {
+            display: block;
         }
         
-        .sources h3 {
+        /* 판정 카드 */
+        .verdict-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .verdict-card h2 {
+            font-size: 32px;
             margin-bottom: 10px;
+        }
+        
+        .verdict-card .confidence {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        /* 신뢰도 점수 바 */
+        .credibility-scores {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .credibility-scores h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .score-bar {
+            margin-bottom: 15px;
+        }
+        
+        .score-bar-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
             color: #555;
         }
         
-        .source-item {
-            margin-bottom: 10px;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
+        .score-bar-fill {
+            height: 25px;
+            background: #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
         }
         
-        .source-item a {
+        .score-bar-inner {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .score-fact { background: #28a745; }
+        .score-partial { background: #ffc107; }
+        .score-misinfo { background: #dc3545; }
+        .score-unverified { background: #6c757d; }
+        
+        /* 정치적 편향성 슬라이더 */
+        .political-bias {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .political-bias h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .bias-slider-container {
+            position: relative;
+            height: 50px;
+            background: linear-gradient(to right, #0066cc 0%, #ffffff 50%, #cc0000 100%);
+            border-radius: 25px;
+            margin: 20px 0;
+        }
+        
+        .bias-marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 4px solid #333;
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: left 0.5s ease;
+        }
+        
+        .bias-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .bias-explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* 타임라인 */
+        .timeline {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .timeline h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-left: 40px;
+            padding-bottom: 30px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .timeline-item:last-child {
+            padding-bottom: 0;
+            border-left: none;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            background: #667eea;
+            border-radius: 50%;
+        }
+        
+        .timeline-date {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-event {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-source {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        /* 출처 목록 */
+        .sources {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .sources h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .source-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .source-title {
+            flex: 1;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .source-title a {
             color: #667eea;
             text-decoration: none;
         }
         
-        .source-item a:hover {
+        .source-title a:hover {
             text-decoration: underline;
         }
-
+        
+        .source-reliability {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+        
+        .reliability-badge {
+            padding: 4px 8px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .reliability-high { background: #28a745; }
+        .reliability-medium { background: #ffc107; color: #333; }
+        .reliability-low { background: #dc3545; }
+        
+        .source-meta {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        /* 거짓정보 출처 */
+        .misinfo-sources {
+            background: #fff3cd;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #ffc107;
+        }
+        
+        .misinfo-sources h3 {
+            margin-bottom: 15px;
+            color: #856404;
+        }
+        
+        .misinfo-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .misinfo-platform {
+            font-weight: bold;
+            color: #dc3545;
+            margin-bottom: 5px;
+        }
+        
+        .misinfo-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        /* 상세 분석 */
+        .details-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .details-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .details-section p {
+            line-height: 1.8;
+            color: #555;
+        }
+        
+        .recommendations {
+            background: #d1ecf1;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #0c5460;
+            margin-top: 15px;
+        }
+        
+        .recommendations h4 {
+            color: #0c5460;
+            margin-bottom: 10px;
+        }
+        
+        .recommendations p {
+            color: #0c5460;
+            line-height: 1.6;
+        }
+        
         .error {
             background: #f8d7da;
             color: #721c24;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 20px;
+            border-radius: 10px;
             margin-top: 20px;
+            border: 1px solid #f5c6cb;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔍 팩트체크</h1>
+        <h1>🔍 팩트체크 프로</h1>
+        <p class="subtitle">AI 기반 종합 뉴스 검증 시스템</p>
         
         <div class="search-box">
             <input 
@@ -199,7 +449,7 @@
         
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>팩트체크 중입니다...</p>
+            <p>AI가 종합적으로 분석 중입니다...</p>
         </div>
         
         <div class="result" id="result"></div>
@@ -211,7 +461,6 @@
         const loading = document.getElementById('loading');
         const result = document.getElementById('result');
 
-        // 팩트체크 함수
         async function checkFact() {
             const claim = claimInput.value.trim();
             
@@ -220,10 +469,10 @@
                 return;
             }
 
-            // UI 상태 변경
             checkButton.disabled = true;
             loading.classList.add('show');
             result.classList.remove('show');
+            result.innerHTML = '';
 
             try {
                 console.log('팩트체크 요청:', claim);
@@ -233,7 +482,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ claim })  // 'claim'으로 수정!
+                    body: JSON.stringify({ claim })
                 });
 
                 console.log('응답 상태:', response.status);
@@ -254,7 +503,7 @@
                 console.error('Error:', error);
                 result.innerHTML = `
                     <div class="error">
-                        <strong>오류가 발생했습니다</strong><br>
+                        <strong>⚠️ 오류가 발생했습니다</strong><br>
                         ${error.message}
                     </div>
                 `;
@@ -265,62 +514,157 @@
             }
         }
 
-        // 결과 표시 함수
         function displayResult(data) {
-            const verdictClass = 
-                data.verdict === '사실' ? 'true' :
-                data.verdict === '거짓' ? 'false' :
-                data.verdict === '부분적 사실' ? 'partial' : 'unknown';
+            // 판정 카드
+            let html = `
+                <div class="verdict-card">
+                    <h2>${data.verdict}</h2>
+                    <p class="confidence">신뢰도: ${data.confidence}%</p>
+                    <p style="margin-top: 15px; font-size: 18px;">${data.summary}</p>
+                </div>
+            `;
 
-            let sourcesHtml = '';
-            if (data.sources && data.sources.length > 0) {
-                sourcesHtml = `
-                    <div class="sources">
-                        <h3>📰 참고 출처</h3>
-                        ${data.sources.map(source => `
-                            <div class="source-item">
-                                <a href="${source.url}" target="_blank">${source.title}</a>
-                                <br><small>${source.date || ''}</small>
+            // 신뢰도 점수
+            if (data.credibilityScore) {
+                html += `
+                    <div class="credibility-scores">
+                        <h3>📊 신뢰도 분석</h3>
+                        ${createScoreBar('사실', data.credibilityScore.fact, 'fact')}
+                        ${createScoreBar('부분적 사실', data.credibilityScore.partialTruth, 'partial')}
+                        ${createScoreBar('허위정보', data.credibilityScore.misinformation, 'misinfo')}
+                        ${createScoreBar('검증불가', data.credibilityScore.unverified, 'unverified')}
+                    </div>
+                `;
+            }
+
+            // 정치적 편향성 슬라이더
+            if (data.politicalBias) {
+                const biasPercent = ((data.politicalBias - 1) / 9) * 100;
+                html += `
+                    <div class="political-bias">
+                        <h3>⚖️ 정치적 편향성</h3>
+                        <div class="bias-slider-container">
+                            <div class="bias-marker" style="left: ${biasPercent}%"></div>
+                        </div>
+                        <div class="bias-labels">
+                            <span>← 진보</span>
+                            <span>중립</span>
+                            <span>보수 →</span>
+                        </div>
+                        <div class="bias-explanation">
+                            <strong>분석:</strong> ${data.biasExplanation || '정치적 편향성에 대한 설명이 없습니다.'}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 타임라인
+            if (data.timeline && data.timeline.length > 0) {
+                html += `
+                    <div class="timeline">
+                        <h3>📅 사건 타임라인</h3>
+                        ${data.timeline.map(item => `
+                            <div class="timeline-item">
+                                <div class="timeline-date">${item.date}</div>
+                                <div class="timeline-event">${item.event}</div>
+                                <div class="timeline-source">출처: ${item.source}</div>
                             </div>
                         `).join('')}
                     </div>
                 `;
             }
 
-            result.innerHTML = `
-                <div class="verdict ${verdictClass}">
-                    ${data.verdict} (신뢰도: ${data.confidence})
-                </div>
-                <div class="summary">
-                    <strong>요약:</strong> ${data.summary}
-                </div>
-                <div class="details">
-                    <strong>상세 분석:</strong><br>
-                    ${data.details}
-                </div>
-                ${data.reasoning ? `
-                    <div class="details">
-                        <strong>판단 근거:</strong><br>
-                        ${data.reasoning}
+            // 거짓정보 출처
+            if (data.misinformationSources && data.misinformationSources.length > 0) {
+                html += `
+                    <div class="misinfo-sources">
+                        <h3>⚠️ 거짓정보가 퍼진 경로</h3>
+                        ${data.misinformationSources.map(item => `
+                            <div class="misinfo-item">
+                                <div class="misinfo-platform">📍 ${item.platform}</div>
+                                <div class="misinfo-description">${item.description}</div>
+                            </div>
+                        `).join('')}
                     </div>
-                ` : ''}
-                ${sourcesHtml}
+                `;
+            }
+
+            // 출처 목록
+            if (data.sources && data.sources.length > 0) {
+                html += `
+                    <div class="sources">
+                        <h3>📰 참고 출처</h3>
+                        ${data.sources.map(source => `
+                            <div class="source-item">
+                                <div class="source-header">
+                                    <div class="source-title">
+                                        <a href="${source.url}" target="_blank">${source.title}</a>
+                                    </div>
+                                    <div class="source-reliability">
+                                        <span class="reliability-badge reliability-${source.credibility === '높음' ? 'high' : source.credibility === '중간' ? 'medium' : 'low'}">
+                                            ${source.credibility}
+                                        </span>
+                                        <span>${source.reliability || 0}%</span>
+                                    </div>
+                                </div>
+                                <div class="source-meta">
+                                    ${source.outlet} · ${source.type} · ${source.date}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 상세 분석
+            html += `
+                <div class="details-section">
+                    <h3>🔍 상세 분석</h3>
+                    <p>${data.details}</p>
+                    ${data.reasoning ? `
+                        <p style="margin-top: 15px;"><strong>판단 근거:</strong> ${data.reasoning}</p>
+                    ` : ''}
+                </div>
             `;
-            
+
+            // 추천사항
+            if (data.recommendations) {
+                html += `
+                    <div class="recommendations">
+                        <h4>💡 권장사항</h4>
+                        <p>${data.recommendations}</p>
+                    </div>
+                `;
+            }
+
+            result.innerHTML = html;
             result.classList.add('show');
         }
 
-        // 버튼 클릭 이벤트
+        function createScoreBar(label, value, type) {
+            return `
+                <div class="score-bar">
+                    <div class="score-bar-label">
+                        <span>${label}</span>
+                        <span>${value}%</span>
+                    </div>
+                    <div class="score-bar-fill">
+                        <div class="score-bar-inner score-${type}" style="width: ${value}%">
+                            ${value > 15 ? value + '%' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         checkButton.addEventListener('click', checkFact);
 
-        // 엔터키 이벤트
         claimInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 checkFact();
             }
         });
 
-        // 페이지 로드시 input에 포커스
         claimInput.focus();
     </script>
 </body>
