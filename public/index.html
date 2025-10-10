@@ -43,8 +43,15 @@
         
         .search-box {
             display: flex;
+            flex-direction: column;
             gap: 10px;
             margin-bottom: 30px;
+        }
+        
+        @media (min-width: 768px) {
+            .search-box {
+                flex-direction: row;
+            }
         }
         
         input {
@@ -54,6 +61,7 @@
             border-radius: 10px;
             font-size: 16px;
             transition: border-color 0.3s;
+            width: 100%;
         }
         
         input:focus {
@@ -71,6 +79,13 @@
             font-weight: bold;
             cursor: pointer;
             transition: background 0.3s;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            button {
+                width: auto;
+            }
         }
         
         button:hover {
@@ -115,7 +130,6 @@
             display: block;
         }
         
-        /* 판정 카드 */
         .verdict-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -135,7 +149,70 @@
             opacity: 0.9;
         }
         
-        /* 신뢰도 점수 바 */
+        /* 주 출처 통계 */
+        .source-stats {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .source-stats h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .top-sources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .top-source-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #667eea;
+        }
+        
+        .top-source-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .top-source-count {
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .source-type-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .source-type-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .source-type-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .source-type-percent {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
         .credibility-scores {
             background: #f8f9fa;
             padding: 25px;
@@ -184,7 +261,6 @@
         .score-misinfo { background: #dc3545; }
         .score-unverified { background: #6c757d; }
         
-        /* 정치적 편향성 슬라이더 */
         .political-bias {
             background: #f8f9fa;
             padding: 25px;
@@ -235,7 +311,6 @@
             line-height: 1.6;
         }
         
-        /* 타임라인 */
         .timeline {
             background: #f8f9fa;
             padding: 25px;
@@ -288,73 +363,6 @@
             color: #888;
         }
         
-        /* 출처 목록 */
-        .sources {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .sources h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        
-        .source-item {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .source-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 10px;
-        }
-        
-        .source-title {
-            flex: 1;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .source-title a {
-            color: #667eea;
-            text-decoration: none;
-        }
-        
-        .source-title a:hover {
-            text-decoration: underline;
-        }
-        
-        .source-reliability {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 12px;
-        }
-        
-        .reliability-badge {
-            padding: 4px 8px;
-            border-radius: 5px;
-            color: white;
-            font-weight: bold;
-        }
-        
-        .reliability-high { background: #28a745; }
-        .reliability-medium { background: #ffc107; color: #333; }
-        .reliability-low { background: #dc3545; }
-        
-        .source-meta {
-            font-size: 12px;
-            color: #888;
-        }
-        
-        /* 거짓정보 출처 */
         .misinfo-sources {
             background: #fff3cd;
             padding: 25px;
@@ -387,7 +395,6 @@
             line-height: 1.6;
         }
         
-        /* 상세 분석 */
         .details-section {
             background: #f8f9fa;
             padding: 25px;
@@ -421,6 +428,74 @@
         .recommendations p {
             color: #0c5460;
             line-height: 1.6;
+        }
+        
+        .sources {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .sources h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .source-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .source-title {
+            flex: 1;
+            font-weight: bold;
+            color: #333;
+            min-width: 200px;
+        }
+        
+        .source-title a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .source-title a:hover {
+            text-decoration: underline;
+        }
+        
+        .source-reliability {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+        
+        .reliability-badge {
+            padding: 4px 8px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .reliability-high { background: #28a745; }
+        .reliability-medium { background: #ffc107; color: #333; }
+        .reliability-low { background: #dc3545; }
+        
+        .source-meta {
+            font-size: 12px;
+            color: #888;
         }
         
         .error {
@@ -475,8 +550,6 @@
             result.innerHTML = '';
 
             try {
-                console.log('팩트체크 요청:', claim);
-                
                 const response = await fetch('/api/factcheck', {
                     method: 'POST',
                     headers: {
@@ -485,17 +558,12 @@
                     body: JSON.stringify({ claim })
                 });
 
-                console.log('응답 상태:', response.status);
-
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error('API 에러:', errorData);
                     throw new Error(errorData.error || 'API 요청 실패');
                 }
 
                 const data = await response.json();
-                console.log('응답 데이터:', data);
-                
                 const factCheckResult = JSON.parse(data.content[0].text);
                 displayResult(factCheckResult);
 
@@ -515,29 +583,55 @@
         }
 
         function displayResult(data) {
-            // 판정 카드
             let html = `
                 <div class="verdict-card">
-                    <h2>${data.verdict}</h2>
-                    <p class="confidence">신뢰도: ${data.confidence}%</p>
-                    <p style="margin-top: 15px; font-size: 18px;">${data.summary}</p>
+                    <h2>${data.verdict || '확인 불가'}</h2>
+                    <p class="confidence">신뢰도: ${data.confidence || 0}%</p>
+                    <p style="margin-top: 15px; font-size: 18px;">${data.summary || '요약 정보 없음'}</p>
                 </div>
             `;
 
-            // 신뢰도 점수
-            if (data.credibilityScore) {
+            // 주 출처 통계
+            if (data.sources && data.sources.length > 0) {
+                const sourceStats = calculateSourceStats(data.sources);
                 html += `
-                    <div class="credibility-scores">
-                        <h3>📊 신뢰도 분석</h3>
-                        ${createScoreBar('사실', data.credibilityScore.fact, 'fact')}
-                        ${createScoreBar('부분적 사실', data.credibilityScore.partialTruth, 'partial')}
-                        ${createScoreBar('허위정보', data.credibilityScore.misinformation, 'misinfo')}
-                        ${createScoreBar('검증불가', data.credibilityScore.unverified, 'unverified')}
+                    <div class="source-stats">
+                        <h3>📊 주요 출처</h3>
+                        <div class="top-sources">
+                            ${sourceStats.topOutlets.map(item => `
+                                <div class="top-source-item">
+                                    <div class="top-source-name">${item.name}</div>
+                                    <div class="top-source-count">${item.count}회 인용</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="source-type-breakdown">
+                            ${Object.entries(sourceStats.typePercentages).map(([type, percent]) => `
+                                <div class="source-type-item">
+                                    <div class="source-type-label">${type}</div>
+                                    <div class="source-type-percent">${percent}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 `;
             }
 
-            // 정치적 편향성 슬라이더
+            // 신뢰도 점수
+            if (data.credibilityScore) {
+                const cs = data.credibilityScore;
+                html += `
+                    <div class="credibility-scores">
+                        <h3>📊 신뢰도 분석</h3>
+                        ${createScoreBar('사실', cs.fact || 0, 'fact')}
+                        ${createScoreBar('부분적 사실', cs.partialTruth || 0, 'partial')}
+                        ${createScoreBar('허위정보', cs.misinformation || 0, 'misinfo')}
+                        ${createScoreBar('검증불가', cs.unverified || 0, 'unverified')}
+                    </div>
+                `;
+            }
+
+            // 정치적 편향성
             if (data.politicalBias) {
                 const biasPercent = ((data.politicalBias - 1) / 9) * 100;
                 html += `
@@ -551,25 +645,11 @@
                             <span>중립</span>
                             <span>보수 →</span>
                         </div>
-                        <div class="bias-explanation">
-                            <strong>분석:</strong> ${data.biasExplanation || '정치적 편향성에 대한 설명이 없습니다.'}
-                        </div>
-                    </div>
-                `;
-            }
-
-            // 타임라인
-            if (data.timeline && data.timeline.length > 0) {
-                html += `
-                    <div class="timeline">
-                        <h3>📅 사건 타임라인</h3>
-                        ${data.timeline.map(item => `
-                            <div class="timeline-item">
-                                <div class="timeline-date">${item.date}</div>
-                                <div class="timeline-event">${item.event}</div>
-                                <div class="timeline-source">출처: ${item.source}</div>
+                        ${data.biasExplanation ? `
+                            <div class="bias-explanation">
+                                <strong>분석:</strong> ${data.biasExplanation}
                             </div>
-                        `).join('')}
+                        ` : ''}
                     </div>
                 `;
             }
@@ -581,35 +661,24 @@
                         <h3>⚠️ 거짓정보가 퍼진 경로</h3>
                         ${data.misinformationSources.map(item => `
                             <div class="misinfo-item">
-                                <div class="misinfo-platform">📍 ${item.platform}</div>
-                                <div class="misinfo-description">${item.description}</div>
+                                <div class="misinfo-platform">📍 ${item.platform || '출처 미상'}</div>
+                                <div class="misinfo-description">${item.description || ''}</div>
                             </div>
                         `).join('')}
                     </div>
                 `;
             }
 
-            // 출처 목록
-            if (data.sources && data.sources.length > 0) {
+            // 타임라인 (상세분석 위로 이동)
+            if (data.timeline && data.timeline.length > 0) {
                 html += `
-                    <div class="sources">
-                        <h3>📰 참고 출처</h3>
-                        ${data.sources.map(source => `
-                            <div class="source-item">
-                                <div class="source-header">
-                                    <div class="source-title">
-                                        <a href="${source.url}" target="_blank">${source.title}</a>
-                                    </div>
-                                    <div class="source-reliability">
-                                        <span class="reliability-badge reliability-${source.credibility === '높음' ? 'high' : source.credibility === '중간' ? 'medium' : 'low'}">
-                                            ${source.credibility}
-                                        </span>
-                                        <span>${source.reliability || 0}%</span>
-                                    </div>
-                                </div>
-                                <div class="source-meta">
-                                    ${source.outlet} · ${source.type} · ${source.date}
-                                </div>
+                    <div class="timeline">
+                        <h3>📅 사건 타임라인</h3>
+                        ${data.timeline.map(item => `
+                            <div class="timeline-item">
+                                <div class="timeline-date">${item.date || '날짜 미상'}</div>
+                                <div class="timeline-event">${item.event || ''}</div>
+                                <div class="timeline-source">출처: ${item.source || '미상'}</div>
                             </div>
                         `).join('')}
                     </div>
@@ -620,7 +689,7 @@
             html += `
                 <div class="details-section">
                     <h3>🔍 상세 분석</h3>
-                    <p>${data.details}</p>
+                    <p>${data.details || '상세 분석 정보가 없습니다.'}</p>
                     ${data.reasoning ? `
                         <p style="margin-top: 15px;"><strong>판단 근거:</strong> ${data.reasoning}</p>
                     ` : ''}
@@ -637,8 +706,70 @@
                 `;
             }
 
+            // 참고 출처 (제일 하단)
+            if (data.sources && data.sources.length > 0) {
+                html += `
+                    <div class="sources">
+                        <h3>📰 참고 출처</h3>
+                        ${data.sources.map(source => {
+                            const credibility = source.credibility || '중간';
+                            const credClass = credibility === '높음' ? 'high' : credibility === '중간' ? 'medium' : 'low';
+                            const reliability = source.reliability || 0;
+                            
+                            return `
+                                <div class="source-item">
+                                    <div class="source-header">
+                                        <div class="source-title">
+                                            <a href="${source.url || '#'}" target="_blank">${source.title || '제목 없음'}</a>
+                                        </div>
+                                        <div class="source-reliability">
+                                            <span class="reliability-badge reliability-${credClass}">
+                                                ${credibility}
+                                            </span>
+                                            ${reliability > 0 ? `<span>${reliability}%</span>` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="source-meta">
+                                        ${source.outlet || '출처 미상'} · ${source.type || '일반'} · ${source.date || '날짜 미상'}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
             result.innerHTML = html;
             result.classList.add('show');
+        }
+
+        function calculateSourceStats(sources) {
+            // 출처별 카운트
+            const outletCount = {};
+            const typeCount = {};
+            
+            sources.forEach(source => {
+                const outlet = source.outlet || '출처 미상';
+                const type = source.type || '일반';
+                
+                outletCount[outlet] = (outletCount[outlet] || 0) + 1;
+                typeCount[type] = (typeCount[type] || 0) + 1;
+            });
+
+            // 상위 3개 출처
+            const topOutlets = Object.entries(outletCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([name, count]) => ({ name, count }));
+
+            // 타입별 퍼센트
+            const total = sources.length;
+            const typePercentages = {};
+            Object.entries(typeCount).forEach(([type, count]) => {
+                typePercentages[type] = Math.round((count / total) * 100);
+            });
+
+            return { topOutlets, typePercentages };
         }
 
         function createScoreBar(label, value, type) {
@@ -658,13 +789,11 @@
         }
 
         checkButton.addEventListener('click', checkFact);
-
         claimInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 checkFact();
             }
         });
-
         claimInput.focus();
     </script>
 </body>
