@@ -1,13 +1,327 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="AI 팩트체크" />
-    <title>AI 팩트체크</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>팩트체크 앱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 32px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .verdict {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .verdict.true {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .verdict.false {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .verdict.partial {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .verdict.unknown {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .details {
+            margin-top: 20px;
+            line-height: 1.8;
+        }
+        
+        .sources {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .sources h3 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .source-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .source-item a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .source-item a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 팩트체크</h1>
+        
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="claimInput" 
+                placeholder="검증하고 싶은 뉴스나 주장을 입력하세요..." 
+            />
+            <button id="checkButton">검증하기</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>팩트체크 중입니다...</p>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const claimInput = document.getElementById('claimInput');
+        const checkButton = document.getElementById('checkButton');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+
+        // 팩트체크 함수
+        async function checkFact() {
+            const claim = claimInput.value.trim();
+            
+            if (!claim) {
+                alert('검증할 내용을 입력해주세요.');
+                return;
+            }
+
+            // UI 상태 변경
+            checkButton.disabled = true;
+            loading.classList.add('show');
+            result.classList.remove('show');
+
+            try {
+                console.log('팩트체크 요청:', claim);
+                
+                const response = await fetch('/api/factcheck', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ claim })  // 'claim'으로 수정!
+                });
+
+                console.log('응답 상태:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('API 에러:', errorData);
+                    throw new Error(errorData.error || 'API 요청 실패');
+                }
+
+                const data = await response.json();
+                console.log('응답 데이터:', data);
+                
+                const factCheckResult = JSON.parse(data.content[0].text);
+                displayResult(factCheckResult);
+
+            } catch (error) {
+                console.error('Error:', error);
+                result.innerHTML = `
+                    <div class="error">
+                        <strong>오류가 발생했습니다</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                result.classList.add('show');
+            } finally {
+                checkButton.disabled = false;
+                loading.classList.remove('show');
+            }
+        }
+
+        // 결과 표시 함수
+        function displayResult(data) {
+            const verdictClass = 
+                data.verdict === '사실' ? 'true' :
+                data.verdict === '거짓' ? 'false' :
+                data.verdict === '부분적 사실' ? 'partial' : 'unknown';
+
+            let sourcesHtml = '';
+            if (data.sources && data.sources.length > 0) {
+                sourcesHtml = `
+                    <div class="sources">
+                        <h3>📰 참고 출처</h3>
+                        ${data.sources.map(source => `
+                            <div class="source-item">
+                                <a href="${source.url}" target="_blank">${source.title}</a>
+                                <br><small>${source.date || ''}</small>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            result.innerHTML = `
+                <div class="verdict ${verdictClass}">
+                    ${data.verdict} (신뢰도: ${data.confidence})
+                </div>
+                <div class="summary">
+                    <strong>요약:</strong> ${data.summary}
+                </div>
+                <div class="details">
+                    <strong>상세 분석:</strong><br>
+                    ${data.details}
+                </div>
+                ${data.reasoning ? `
+                    <div class="details">
+                        <strong>판단 근거:</strong><br>
+                        ${data.reasoning}
+                    </div>
+                ` : ''}
+                ${sourcesHtml}
+            `;
+            
+            result.classList.add('show');
+        }
+
+        // 버튼 클릭 이벤트
+        checkButton.addEventListener('click', checkFact);
+
+        // 엔터키 이벤트
+        claimInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkFact();
+            }
+        });
+
+        // 페이지 로드시 input에 포커스
+        claimInput.focus();
+    </script>
+</body>
 </html>
