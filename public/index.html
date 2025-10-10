@@ -149,7 +149,6 @@
             opacity: 0.9;
         }
         
-        /* 주 출처 통계 */
         .source-stats {
             background: #f8f9fa;
             padding: 25px;
@@ -395,6 +394,15 @@
             line-height: 1.6;
         }
         
+        .misinfo-bias {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
         .details-section {
             background: #f8f9fa;
             padding: 25px;
@@ -480,6 +488,7 @@
             align-items: center;
             gap: 10px;
             font-size: 12px;
+            white-space: nowrap;
         }
         
         .reliability-badge {
@@ -496,7 +505,27 @@
         .source-meta {
             font-size: 12px;
             color: #888;
+            margin-bottom: 5px;
         }
+        
+        .source-bias {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .bias-극진보 { background: #0066cc; color: white; }
+        .bias-진보 { background: #4d94ff; color: white; }
+        .bias-중도진보 { background: #80b3ff; color: white; }
+        .bias-중립 { background: #e0e0e0; color: #333; }
+        .bias-중도보수 { background: #ff9999; color: white; }
+        .bias-보수 { background: #ff6666; color: white; }
+        .bias-극보수 { background: #cc0000; color: white; }
+        .bias-극우 { background: #990000; color: white; }
+        .bias-극좌 { background: #003d99; color: white; }
         
         .error {
             background: #f8d7da;
@@ -591,28 +620,32 @@
                 </div>
             `;
 
-            // 주 출처 통계
+            // 주요 출처 통계
             if (data.sources && data.sources.length > 0) {
                 const sourceStats = calculateSourceStats(data.sources);
                 html += `
                     <div class="source-stats">
                         <h3>📊 주요 출처</h3>
-                        <div class="top-sources">
-                            ${sourceStats.topOutlets.map(item => `
-                                <div class="top-source-item">
-                                    <div class="top-source-name">${item.name}</div>
-                                    <div class="top-source-count">${item.count}회 인용</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="source-type-breakdown">
-                            ${Object.entries(sourceStats.typePercentages).map(([type, percent]) => `
-                                <div class="source-type-item">
-                                    <div class="source-type-label">${type}</div>
-                                    <div class="source-type-percent">${percent}%</div>
-                                </div>
-                            `).join('')}
-                        </div>
+                        ${sourceStats.topOutlets.length > 0 ? `
+                            <div class="top-sources">
+                                ${sourceStats.topOutlets.map(item => `
+                                    <div class="top-source-item">
+                                        <div class="top-source-name">${item.name}</div>
+                                        <div class="top-source-count">${item.count}회 인용</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        ${Object.keys(sourceStats.typePercentages).length > 0 ? `
+                            <div class="source-type-breakdown">
+                                ${Object.entries(sourceStats.typePercentages).map(([type, percent]) => `
+                                    <div class="source-type-item">
+                                        <div class="source-type-label">${type}</div>
+                                        <div class="source-type-percent">${percent}%</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }
@@ -663,13 +696,14 @@
                             <div class="misinfo-item">
                                 <div class="misinfo-platform">📍 ${item.platform || '출처 미상'}</div>
                                 <div class="misinfo-description">${item.description || ''}</div>
+                                ${item.bias ? `<span class="misinfo-bias bias-${item.bias}">${item.bias}</span>` : ''}
                             </div>
                         `).join('')}
                     </div>
                 `;
             }
 
-            // 타임라인 (상세분석 위로 이동)
+            // 타임라인
             if (data.timeline && data.timeline.length > 0) {
                 html += `
                     <div class="timeline">
@@ -715,6 +749,8 @@
                             const credibility = source.credibility || '중간';
                             const credClass = credibility === '높음' ? 'high' : credibility === '중간' ? 'medium' : 'low';
                             const reliability = source.reliability || 0;
+                            const displayName = source.type === '유튜브' && source.channelName ? 
+                                source.channelName : (source.outlet || '출처 미상');
                             
                             return `
                                 <div class="source-item">
@@ -724,14 +760,14 @@
                                         </div>
                                         <div class="source-reliability">
                                             <span class="reliability-badge reliability-${credClass}">
-                                                ${credibility}
+                                                신뢰도: ${credibility} ${reliability > 0 ? reliability + '%' : ''}
                                             </span>
-                                            ${reliability > 0 ? `<span>${reliability}%</span>` : ''}
                                         </div>
                                     </div>
                                     <div class="source-meta">
-                                        ${source.outlet || '출처 미상'} · ${source.type || '일반'} · ${source.date || '날짜 미상'}
+                                        ${displayName} · ${source.type || '일반'} · ${source.date || '날짜 미상'}
                                     </div>
+                                    ${source.bias ? `<span class="source-bias bias-${source.bias}">${source.bias}</span>` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -744,25 +780,28 @@
         }
 
         function calculateSourceStats(sources) {
-            // 출처별 카운트
             const outletCount = {};
             const typeCount = {};
             
             sources.forEach(source => {
-                const outlet = source.outlet || '출처 미상';
+                const outlet = source.type === '유튜브' && source.channelName ? 
+                    source.channelName : (source.outlet || '출처 미상');
                 const type = source.type || '일반';
                 
-                outletCount[outlet] = (outletCount[outlet] || 0) + 1;
-                typeCount[type] = (typeCount[type] || 0) + 1;
+                if (outlet !== '출처 미상') {
+                    outletCount[outlet] = (outletCount[outlet] || 0) + 1;
+                }
+                
+                if (type !== '일반') {
+                    typeCount[type] = (typeCount[type] || 0) + 1;
+                }
             });
 
-            // 상위 3개 출처
             const topOutlets = Object.entries(outletCount)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 3)
                 .map(([name, count]) => ({ name, count }));
 
-            // 타입별 퍼센트
             const total = sources.length;
             const typePercentages = {};
             Object.entries(typeCount).forEach(([type, count]) => {

@@ -21,6 +21,7 @@ export default async function handler(req, res) {
 
   try {
     console.log('팩트체크 시작:', claim);
+    console.log('사용 모델: gpt-4o-mini');
     
     if (!process.env.NAVER_CLIENT_ID || !process.env.NAVER_CLIENT_SECRET) {
       throw new Error('네이버 API 키가 설정되지 않았습니다.');
@@ -30,7 +31,6 @@ export default async function handler(req, res) {
       throw new Error('OpenAI API 키가 설정되지 않았습니다.');
     }
 
-    // 네이버 뉴스 검색
     console.log('네이버 검색 시작...');
     const newsResponse = await fetch(
       `https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(claim)}&display=20&sort=date`,
@@ -77,7 +77,6 @@ export default async function handler(req, res) {
       });
     }
     
-    // 검색 결과 정리
     const searchResults = newsData.items.map((item, idx) => {
       const title = item.title.replace(/<[^>]*>/g, '');
       const description = item.description.replace(/<[^>]*>/g, '');
@@ -92,7 +91,6 @@ URL: ${item.originallink || item.link}
 
     console.log('OpenAI 분석 시작... (모델: gpt-4o-mini)');
 
-    // OpenAI 분석 - gpt-4o-mini 사용
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -100,7 +98,7 @@ URL: ${item.originallink || item.link}
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",  // 모델 변경!
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -130,7 +128,9 @@ URL: ${item.originallink || item.link}
       "outlet": "조선일보",
       "credibility": "높음",
       "type": "주요언론",
-      "reliability": 85
+      "reliability": 85,
+      "bias": "보수",
+      "channelName": "채널명"
     }
   ],
   "timeline": [
@@ -147,8 +147,9 @@ URL: ${item.originallink || item.link}
   ],
   "misinformationSources": [
     {
-      "platform": "특정 플랫폼명",
-      "description": "어떤 거짓정보가 퍼졌는지"
+      "platform": "특정 플랫폼명 또는 채널명",
+      "description": "어떤 거짓정보가 퍼졌는지",
+      "bias": "극우" 또는 "극좌" 또는 "중립"
     }
   ],
   "reasoning": "판단 근거",
@@ -156,13 +157,37 @@ URL: ${item.originallink || item.link}
 }
 
 필수 규칙:
-1. outlet은 검색 결과에서 실제 언론사 이름 추출 (예: 조선일보, KBS, 연합뉴스, YTN, SBS)
-2. timeline은 최소 2개 이상의 이벤트 포함
-3. date는 YYYY-MM-DD 형식
-4. reliability는 0-100 사이 실제 숫자
-5. 모든 배열은 최소 1개 이상 포함
-6. credibility는 반드시 "높음", "중간", "낮음" 중 하나
-7. type은 "주요언론", "온라인매체", "정부기관", "연구소", "SNS" 중 하나`
+1. outlet은 검색 결과에서 실제 언론사/채널 이름 추출
+   - 언론사: 조선일보, KBS, 연합뉴스, YTN, SBS, 한겨레, 경향신문
+   - 유튜브: "가로세로연구소", "신의한수", "김어준의 다스뵈이다" 등 채널명
+   - SNS: "디시인사이드 정치갤러리", "일베", "클리앙" 등
+
+2. type은 반드시 다음 중 하나:
+   - "주요언론": KBS, MBC, SBS, 연합뉴스, 조선일보, 중앙일보, 동아일보, 한겨레, 경향신문
+   - "온라인매체": 오마이뉴스, 프레시안, 미디어오늘, 뉴스타파
+   - "정부기관": 청와대, 국회, 법무부, 경찰청 등 공식 발표
+   - "연구소": 한국정치학회, 여론조사기관, 싱크탱크
+   - "유튜브": 유튜브 채널 (channelName 필수)
+   - "SNS": 트위터, 페이스북, 커뮤니티 사이트
+
+3. bias (정치적 성향) 필수:
+   - "극진보", "진보", "중도진보", "중립", "중도보수", "보수", "극보수"
+   - 유튜브/SNS: 극단적인 경우 "극우", "극좌" 명시
+
+4. channelName (유튜브인 경우):
+   - type이 "유튜브"일 때 반드시 채널명 포함
+   - 예: "가로세로연구소", "신의한수", "김어준의 다스뵈이다"
+
+5. timeline은 최소 2개 이상의 이벤트 포함
+6. date는 YYYY-MM-DD 형식
+7. reliability는 0-100 사이 실제 숫자
+8. credibility는 반드시 "높음", "중간", "낮음" 중 하나
+
+한국 주요 매체의 일반적인 성향:
+- 보수: 조선일보, 중앙일보, 동아일보, TV조선, 채널A
+- 진보: 한겨레, 경향신문, 오마이뉴스, 프레시안
+- 중립: 연합뉴스, KBS (공영방송)
+- 유튜브는 각 채널의 실제 성향 반영`
           },
           {
             role: "user",
@@ -172,10 +197,12 @@ URL: ${item.originallink || item.link}
 ${searchResults}
 
 위 검색 결과를 분석하여:
-1. 각 기사의 언론사 이름을 정확히 추출하세요
-2. 시간순으로 사건을 정리하세요 (최소 2개)
-3. 각 출처의 신뢰도를 평가하세요
-4. 반드시 JSON 형식으로만 응답하세요`
+1. 각 기사의 언론사/채널 이름을 정확히 추출
+2. 각 출처의 정치적 성향(bias) 평가
+3. 유튜브는 채널명(channelName) 반드시 포함
+4. 시간순으로 사건을 정리 (최소 2개)
+5. 각 출처의 신뢰도 평가
+6. 반드시 JSON 형식으로만 응답`
           }
         ],
         temperature: 0.2,
