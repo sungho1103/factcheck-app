@@ -1,28 +1,25 @@
 # 팩트체크 앱
 
-AI 기반 뉴스 검증 시스템
-
-## 기술 스택
-- Frontend: HTML, CSS, JavaScript
-- Backend: Vercel Serverless Functions
-- APIs: Naver Search API, OpenAI gpt-4o-mini
+## 현재 상태
+- ✅ 네이버 뉴스 검색
+- ✅ OpenAI gpt-4o-mini 분석
+- ✅ YouTube API (선택적, 하루 99회)
+- ✅ Vercel KV quota 관리
+- ✅ 언론사 정치 성향 표시
+- ✅ 검증 중/근거 불충분 판정
+- ✅ 타임라인, 슬라이더, 신뢰도 점수
 
 ## 환경 변수 (Vercel)
-- `NAVER_CLIENT_ID`
-- `NAVER_CLIENT_SECRET`
-- `OPENAI_API_KEY`
+- NAVER_CLIENT_ID
+- NAVER_CLIENT_SECRET
+- OPENAI_API_KEY
+- YOUTUBE_API_KEY
+- KV_REST_API_URL (Vercel KV)
+- KV_REST_API_TOKEN
 
-## 주요 기능
-- 네이버 뉴스 검색
-- AI 기반 팩트체크
-- 정치적 편향성 분석
-- 신뢰도 점수
-- 사건 타임라인
-- 출처 분석
+## 배포
+https://factcheck-app.vercel.app/
 
-## 개발 히스토리
-- 2024-10-10: 초기 개발
-- gpt-4o-mini 모델 사용 (비용 절감)
-
-## Claude 대화 링크
-[이 대화 URL]
+## 마지막 작업
+- YouTube 체크박스 추가
+- 언론사 성향 배지 표시
