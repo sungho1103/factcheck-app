@@ -45,7 +45,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         @media (min-width: 768px) {
@@ -54,7 +54,7 @@
             }
         }
         
-        input {
+        input[type="text"] {
             flex: 1;
             padding: 15px 20px;
             border: 2px solid #e0e0e0;
@@ -64,7 +64,7 @@
             width: 100%;
         }
         
-        input:focus {
+        input[type="text"]:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -95,6 +95,47 @@
         button:disabled {
             background: #ccc;
             cursor: not-allowed;
+        }
+        
+        .youtube-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background: #f0f4ff;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .youtube-option:hover {
+            background: #e3edff;
+            border-color: #5568d3;
+        }
+        
+        .youtube-option input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+        
+        .youtube-option label {
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            user-select: none;
+            flex: 1;
+        }
+        
+        .quota-info {
+            color: #667eea;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
         }
         
         .loading {
@@ -139,314 +180,48 @@
             text-align: center;
         }
         
+        .verdict-card.warning {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+        
         .verdict-card h2 {
             font-size: 32px;
             margin-bottom: 10px;
         }
         
-        .verdict-card .confidence {
-            font-size: 18px;
-            opacity: 0.9;
-        }
-        
-        .source-stats {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .source-stats h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        
-        .top-sources {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .top-source-item {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid #667eea;
-        }
-        
-        .top-source-name {
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .top-source-count {
-            color: #667eea;
-            font-size: 14px;
-        }
-        
-        .source-type-breakdown {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-        }
-        
-        .source-type-item {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .source-type-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        
-        .source-type-percent {
-            font-size: 20px;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .credibility-scores {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .credibility-scores h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        
-        .score-bar {
-            margin-bottom: 15px;
-        }
-        
-        .score-bar-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 14px;
-            color: #555;
-        }
-        
-        .score-bar-fill {
-            height: 25px;
-            background: #e0e0e0;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
-        .score-bar-inner {
-            height: 100%;
-            transition: width 0.5s ease;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 10px;
-            color: white;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        
-        .score-fact { background: #28a745; }
-        .score-partial { background: #ffc107; }
-        .score-misinfo { background: #dc3545; }
-        .score-unverified { background: #6c757d; }
-        
-        .political-bias {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .political-bias h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        
-        .bias-slider-container {
-            position: relative;
-            height: 50px;
-            background: linear-gradient(to right, #0066cc 0%, #ffffff 50%, #cc0000 100%);
-            border-radius: 25px;
-            margin: 20px 0;
-        }
-        
-        .bias-marker {
-            position: absolute;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            background: white;
-            border: 4px solid #333;
-            border-radius: 50%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            transition: left 0.5s ease;
-        }
-        
-        .bias-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #666;
-            margin-top: 10px;
-        }
-        
-        .bias-explanation {
-            margin-top: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 10px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        
-        .timeline {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .timeline h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        
-        .timeline-item {
-            position: relative;
-            padding-left: 40px;
-            padding-bottom: 30px;
-            border-left: 3px solid #667eea;
-        }
-        
-        .timeline-item:last-child {
-            padding-bottom: 0;
-            border-left: none;
-        }
-        
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -8px;
-            top: 0;
-            width: 16px;
-            height: 16px;
-            background: #667eea;
-            border-radius: 50%;
-        }
-        
-        .timeline-date {
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-        
-        .timeline-event {
-            color: #333;
-            line-height: 1.6;
-            margin-bottom: 5px;
-        }
-        
-        .timeline-source {
-            font-size: 12px;
-            color: #888;
-        }
-        
-        .misinfo-sources {
-            background: #fff3cd;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            border: 2px solid #ffc107;
-        }
-        
-        .misinfo-sources h3 {
-            margin-bottom: 15px;
-            color: #856404;
-        }
-        
-        .misinfo-item {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .misinfo-platform {
-            font-weight: bold;
-            color: #dc3545;
-            margin-bottom: 5px;
-        }
-        
-        .misinfo-description {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.6;
-        }
-        
-        .misinfo-bias {
+        .outlet-badge {
             display: inline-block;
-            margin-top: 5px;
-            padding: 3px 8px;
-            border-radius: 4px;
+            padding: 4px 10px;
+            border-radius: 12px;
             font-size: 11px;
             font-weight: bold;
+            margin-left: 8px;
         }
         
-        .details-section {
+        .outlet-badge.conservative {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        
+        .outlet-badge.progressive {
+            background: #bbdefb;
+            color: #1565c0;
+        }
+        
+        .outlet-badge.neutral {
+            background: #e0e0e0;
+            color: #616161;
+        }
+        
+        .details-section, .sources {
             background: #f8f9fa;
             padding: 25px;
             border-radius: 15px;
             margin-bottom: 20px;
         }
         
-        .details-section h3 {
+        .details-section h3, .sources h3 {
             margin-bottom: 15px;
-            color: #333;
-        }
-        
-        .details-section p {
-            line-height: 1.8;
-            color: #555;
-        }
-        
-        .recommendations {
-            background: #d1ecf1;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #0c5460;
-            margin-top: 15px;
-        }
-        
-        .recommendations h4 {
-            color: #0c5460;
-            margin-bottom: 10px;
-        }
-        
-        .recommendations p {
-            color: #0c5460;
-            line-height: 1.6;
-        }
-        
-        .sources {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .sources h3 {
-            margin-bottom: 20px;
             color: #333;
         }
         
@@ -458,74 +233,23 @@
             border-left: 4px solid #667eea;
         }
         
-        .source-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
+        .verification-warning {
+            background: #fff3cd;
+            border: 3px solid #ffc107;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .verification-warning h3 {
+            color: #856404;
             margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
         }
         
-        .source-title {
-            flex: 1;
-            font-weight: bold;
-            color: #333;
-            min-width: 200px;
+        .verification-warning p {
+            color: #856404;
+            line-height: 1.6;
         }
-        
-        .source-title a {
-            color: #667eea;
-            text-decoration: none;
-        }
-        
-        .source-title a:hover {
-            text-decoration: underline;
-        }
-        
-        .source-reliability {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 12px;
-            white-space: nowrap;
-        }
-        
-        .reliability-badge {
-            padding: 4px 8px;
-            border-radius: 5px;
-            color: white;
-            font-weight: bold;
-        }
-        
-        .reliability-high { background: #28a745; }
-        .reliability-medium { background: #ffc107; color: #333; }
-        .reliability-low { background: #dc3545; }
-        
-        .source-meta {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 5px;
-        }
-        
-        .source-bias {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-        
-        .bias-극진보 { background: #0066cc; color: white; }
-        .bias-진보 { background: #4d94ff; color: white; }
-        .bias-중도진보 { background: #80b3ff; color: white; }
-        .bias-중립 { background: #e0e0e0; color: #333; }
-        .bias-중도보수 { background: #ff9999; color: white; }
-        .bias-보수 { background: #ff6666; color: white; }
-        .bias-극보수 { background: #cc0000; color: white; }
-        .bias-극우 { background: #990000; color: white; }
-        .bias-극좌 { background: #003d99; color: white; }
         
         .error {
             background: #f8d7da;
@@ -533,7 +257,6 @@
             padding: 20px;
             border-radius: 10px;
             margin-top: 20px;
-            border: 1px solid #f5c6cb;
         }
     </style>
 </head>
@@ -551,6 +274,12 @@
             <button id="checkButton">검증하기</button>
         </div>
         
+        <div class="youtube-option" onclick="toggleYouTube()">
+            <input type="checkbox" id="youtubeCheckbox" onclick="event.stopPropagation()">
+            <label for="youtubeCheckbox">유튜브 채널 검색 포함</label>
+            <span class="quota-info" id="quotaInfo">잔여: --회</span>
+        </div>
+        
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p>AI가 종합적으로 분석 중입니다...</p>
@@ -562,8 +291,32 @@
     <script>
         const claimInput = document.getElementById('claimInput');
         const checkButton = document.getElementById('checkButton');
+        const youtubeCheckbox = document.getElementById('youtubeCheckbox');
+        const quotaInfo = document.getElementById('quotaInfo');
         const loading = document.getElementById('loading');
         const result = document.getElementById('result');
+
+        function toggleYouTube() {
+            youtubeCheckbox.checked = !youtubeCheckbox.checked;
+        }
+
+        async function updateQuota() {
+            try {
+                const response = await fetch('/api/youtube-quota');
+                const data = await response.json();
+                quotaInfo.textContent = `잔여: ${data.remaining}회`;
+                
+                if (!data.enabled) {
+                    quotaInfo.textContent = '(미설정)';
+                    youtubeCheckbox.disabled = true;
+                }
+            } catch (error) {
+                console.error('Quota error:', error);
+                quotaInfo.textContent = '(조회 실패)';
+            }
+        }
+
+        updateQuota();
 
         async function checkFact() {
             const claim = claimInput.value.trim();
@@ -584,7 +337,10 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ claim })
+                    body: JSON.stringify({ 
+                        claim,
+                        includeYouTube: youtubeCheckbox.checked
+                    })
                 });
 
                 if (!response.ok) {
@@ -595,6 +351,7 @@
                 const data = await response.json();
                 const factCheckResult = JSON.parse(data.content[0].text);
                 displayResult(factCheckResult);
+                updateQuota();
 
             } catch (error) {
                 console.error('Error:', error);
@@ -612,219 +369,93 @@
         }
 
         function displayResult(data) {
-            let html = `
-                <div class="verdict-card">
+            let html = '';
+            
+            const verdictClass = data.verdict === '검증 중' || data.verdict === '근거 불충분' ? 
+                'verdict-card warning' : 'verdict-card';
+            
+            html += `
+                <div class="${verdictClass}">
                     <h2>${data.verdict || '확인 불가'}</h2>
-                    <p class="confidence">신뢰도: ${data.confidence || 0}%</p>
+                    <p style="font-size: 18px; opacity: 0.9;">신뢰도: ${data.confidence || 0}%</p>
                     <p style="margin-top: 15px; font-size: 18px;">${data.summary || '요약 정보 없음'}</p>
                 </div>
             `;
-
-            // 주요 출처 통계
-            if (data.sources && data.sources.length > 0) {
-                const sourceStats = calculateSourceStats(data.sources);
+            
+            if (data.verificationStatus && !data.verificationStatus.isVerified) {
                 html += `
-                    <div class="source-stats">
-                        <h3>📊 주요 출처</h3>
-                        ${sourceStats.topOutlets.length > 0 ? `
-                            <div class="top-sources">
-                                ${sourceStats.topOutlets.map(item => `
-                                    <div class="top-source-item">
-                                        <div class="top-source-name">${item.name}</div>
-                                        <div class="top-source-count">${item.count}회 인용</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                        ${Object.keys(sourceStats.typePercentages).length > 0 ? `
-                            <div class="source-type-breakdown">
-                                ${Object.entries(sourceStats.typePercentages).map(([type, percent]) => `
-                                    <div class="source-type-item">
-                                        <div class="source-type-label">${type}</div>
-                                        <div class="source-type-percent">${percent}%</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
+                    <div class="verification-warning">
+                        <h3>⚠️ 중요 안내</h3>
+                        <p>${data.verificationStatus.warningMessage}</p>
+                        <p style="margin-top: 10px; font-size: 13px;">
+                            <strong>증거 강도:</strong> ${data.verificationStatus.evidenceStrength}<br>
+                            <strong>공식 확인:</strong> ${data.verificationStatus.officialConfirmation}
+                        </p>
                     </div>
                 `;
             }
-
-            // 신뢰도 점수
-            if (data.credibilityScore) {
-                const cs = data.credibilityScore;
+            
+            if (data.details) {
                 html += `
-                    <div class="credibility-scores">
-                        <h3>📊 신뢰도 분석</h3>
-                        ${createScoreBar('사실', cs.fact || 0, 'fact')}
-                        ${createScoreBar('부분적 사실', cs.partialTruth || 0, 'partial')}
-                        ${createScoreBar('허위정보', cs.misinformation || 0, 'misinfo')}
-                        ${createScoreBar('검증불가', cs.unverified || 0, 'unverified')}
+                    <div class="details-section">
+                        <h3>🔍 상세 분석</h3>
+                        <p style="line-height: 1.8;">${data.details}</p>
+                        ${data.reasoning ? `<p style="margin-top: 15px;"><strong>판단 근거:</strong> ${data.reasoning}</p>` : ''}
                     </div>
                 `;
             }
-
-            // 정치적 편향성
-            if (data.politicalBias) {
-                const biasPercent = ((data.politicalBias - 1) / 9) * 100;
-                html += `
-                    <div class="political-bias">
-                        <h3>⚖️ 정치적 편향성</h3>
-                        <div class="bias-slider-container">
-                            <div class="bias-marker" style="left: ${biasPercent}%"></div>
-                        </div>
-                        <div class="bias-labels">
-                            <span>← 진보</span>
-                            <span>중립</span>
-                            <span>보수 →</span>
-                        </div>
-                        ${data.biasExplanation ? `
-                            <div class="bias-explanation">
-                                <strong>분석:</strong> ${data.biasExplanation}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }
-
-            // 거짓정보 출처
-            if (data.misinformationSources && data.misinformationSources.length > 0) {
-                html += `
-                    <div class="misinfo-sources">
-                        <h3>⚠️ 거짓정보가 퍼진 경로</h3>
-                        ${data.misinformationSources.map(item => `
-                            <div class="misinfo-item">
-                                <div class="misinfo-platform">📍 ${item.platform || '출처 미상'}</div>
-                                <div class="misinfo-description">${item.description || ''}</div>
-                                ${item.bias ? `<span class="misinfo-bias bias-${item.bias}">${item.bias}</span>` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            // 타임라인
-            if (data.timeline && data.timeline.length > 0) {
-                html += `
-                    <div class="timeline">
-                        <h3>📅 사건 타임라인</h3>
-                        ${data.timeline.map(item => `
-                            <div class="timeline-item">
-                                <div class="timeline-date">${item.date || '날짜 미상'}</div>
-                                <div class="timeline-event">${item.event || ''}</div>
-                                <div class="timeline-source">출처: ${item.source || '미상'}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            // 상세 분석
-            html += `
-                <div class="details-section">
-                    <h3>🔍 상세 분석</h3>
-                    <p>${data.details || '상세 분석 정보가 없습니다.'}</p>
-                    ${data.reasoning ? `
-                        <p style="margin-top: 15px;"><strong>판단 근거:</strong> ${data.reasoning}</p>
-                    ` : ''}
-                </div>
-            `;
-
-            // 추천사항
-            if (data.recommendations) {
-                html += `
-                    <div class="recommendations">
-                        <h4>💡 권장사항</h4>
-                        <p>${data.recommendations}</p>
-                    </div>
-                `;
-            }
-
-            // 참고 출처 (제일 하단)
+            
             if (data.sources && data.sources.length > 0) {
                 html += `
                     <div class="sources">
                         <h3>📰 참고 출처</h3>
                         ${data.sources.map(source => {
-                            const credibility = source.credibility || '중간';
-                            const credClass = credibility === '높음' ? 'high' : credibility === '중간' ? 'medium' : 'low';
-                            const reliability = source.reliability || 0;
-                            const displayName = source.type === '유튜브' && source.channelName ? 
-                                source.channelName : (source.outlet || '출처 미상');
+                            const displayName = source.channelName || source.outlet || '출처 미상';
+                            
+                            let biasClass = '';
+                            let biasText = '';
+                            if (source.outletBias === '보수') {
+                                biasClass = 'conservative';
+                                biasText = '보수';
+                            } else if (source.outletBias === '진보') {
+                                biasClass = 'progressive';
+                                biasText = '진보';
+                            } else if (source.outletBias === '중립') {
+                                biasClass = 'neutral';
+                                biasText = '중립';
+                            }
                             
                             return `
                                 <div class="source-item">
-                                    <div class="source-header">
-                                        <div class="source-title">
-                                            <a href="${source.url || '#'}" target="_blank">${source.title || '제목 없음'}</a>
-                                        </div>
-                                        <div class="source-reliability">
-                                            <span class="reliability-badge reliability-${credClass}">
-                                                신뢰도: ${credibility} ${reliability > 0 ? reliability + '%' : ''}
-                                            </span>
-                                        </div>
+                                    <div>
+                                        <strong>${displayName}</strong>
+                                        ${biasText ? `<span class="outlet-badge ${biasClass}">${biasText}</span>` : ''}
+                                        <span style="font-size: 13px; color: #666;"> · ${source.type || '일반'}</span>
                                     </div>
-                                    <div class="source-meta">
-                                        ${displayName} · ${source.type || '일반'} · ${source.date || '날짜 미상'}
+                                    <div style="font-size: 14px; margin-top: 8px;">
+                                        <a href="${source.url || '#'}" target="_blank" style="color: #667eea; text-decoration: none;">
+                                            ${source.title || '제목 없음'}
+                                        </a>
                                     </div>
-                                    ${source.bias ? `<span class="source-bias bias-${source.bias}">${source.bias}</span>` : ''}
+                                    ${source.contentType ? `
+                                        <div style="font-size: 12px; color: #888; margin-top: 5px;">
+                                            ${source.contentType}
+                                        </div>
+                                    ` : ''}
+                                    ${source.warning ? `
+                                        <div style="color: #dc3545; font-size: 11px; margin-top: 5px;">
+                                            ⚠️ ${source.warning}
+                                        </div>
+                                    ` : ''}
                                 </div>
                             `;
                         }).join('')}
                     </div>
                 `;
             }
-
+            
             result.innerHTML = html;
             result.classList.add('show');
-        }
-
-        function calculateSourceStats(sources) {
-            const outletCount = {};
-            const typeCount = {};
-            
-            sources.forEach(source => {
-                const outlet = source.type === '유튜브' && source.channelName ? 
-                    source.channelName : (source.outlet || '출처 미상');
-                const type = source.type || '일반';
-                
-                if (outlet !== '출처 미상') {
-                    outletCount[outlet] = (outletCount[outlet] || 0) + 1;
-                }
-                
-                if (type !== '일반') {
-                    typeCount[type] = (typeCount[type] || 0) + 1;
-                }
-            });
-
-            const topOutlets = Object.entries(outletCount)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 3)
-                .map(([name, count]) => ({ name, count }));
-
-            const total = sources.length;
-            const typePercentages = {};
-            Object.entries(typeCount).forEach(([type, count]) => {
-                typePercentages[type] = Math.round((count / total) * 100);
-            });
-
-            return { topOutlets, typePercentages };
-        }
-
-        function createScoreBar(label, value, type) {
-            return `
-                <div class="score-bar">
-                    <div class="score-bar-label">
-                        <span>${label}</span>
-                        <span>${value}%</span>
-                    </div>
-                    <div class="score-bar-fill">
-                        <div class="score-bar-inner score-${type}" style="width: ${value}%">
-                            ${value > 15 ? value + '%' : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
         }
 
         checkButton.addEventListener('click', checkFact);
