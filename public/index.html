@@ -665,88 +665,6 @@ margin-bottom: 15px;
             border: 1px solid #f5c6cb;
         }
     </style>
-        .risky-source {
-            border-left: 4px solid #ef4444 !important;
-            background: #fef2f2 !important;
-        }
-        
-        .risk-badge {
-            display: inline-block;
-            background: #ef4444;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        
-        .risk-reason {
-            background: #fee2e2;
-            border: 1px solid #fca5a5;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #991b1b;
-        }
-        
-        .channel-info {
-            margin-top: 8px;
-            padding: 8px;
-            background: #f0f9ff;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #075985;
-        }
-        
-        .channel-type {
-            font-weight: 600;
-        }
-        
-        .bias-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 6px;
-        }
-        
-        .bias-badge.extreme-progressive {
-            background: #1e40af;
-            color: white;
-        }
-        
-        .bias-badge.progressive {
-            background: #3b82f6;
-            color: white;
-        }
-        
-        .bias-badge.center-progressive {
-            background: #93c5fd;
-            color: #1e3a8a;
-        }
-        
-        .bias-badge.neutral {
-            background: #d1d5db;
-            color: #374151;
-        }
-        
-        .bias-badge.center-conservative {
-            background: #fca5a5;
-            color: #7f1d1d;
-        }
-        
-        .bias-badge.conservative {
-            background: #ef4444;
-            color: white;
-        }
-        
-        .bias-badge.extreme-conservative {
-            background: #991b1b;
-            color: white;
-        }
 </head>
 <body>
     <div class="container">
@@ -1070,7 +988,6 @@ margin-bottom: 15px;
             }
 
             // 참고 출처 (제일 하단)
-            // 참고 출처 (제일 하단)
             if (data.sources && data.sources.length > 0) {
                 html += `
                     <div class="sources">
@@ -1117,7 +1034,7 @@ margin-bottom: 15px;
                             
                             return `
                                 <div class="source-item ${isRisky ? 'risky-source' : ''}">
-                                    ${isRisky ? `<div class="risk-badge">⚠️ 주의 필요</div>` : ''}
+                                    ${isRisky ? '<div class="risk-badge">⚠️ 주의 필요</div>' : ''}
                                     
                                     <div class="source-header">
                                         <div class="source-title">
@@ -1133,26 +1050,15 @@ margin-bottom: 15px;
                                     
                                     <div class="source-meta">
                                         ${isYouTube ? '📺 ' : ''}${displayName}
-                                        ${channelBias ? `<span class="bias-badge ${biasClass}">${biasEmoji} ${channelBias}</span>` : ''}
+                                        ${channelBias ? '<span class="bias-badge ' + biasClass + '">' + biasEmoji + ' ' + channelBias + '</span>' : ''}
                                          · ${source.type || '일반'} · ${source.date || '날짜 미상'}
                                     </div>
                                     
-                                    ${isYouTube && source.channelType ? `
-                                        <div class="channel-info">
-                                            <span class="channel-type">${source.channelType}</span>
-                                            ${source.channelCharacteristics ? ` · ${source.channelCharacteristics}` : ''}
-                                        </div>
-                                    ` : ''}
+                                    ${isYouTube && source.channelType ? '<div class="channel-info"><span class="channel-type">' + source.channelType + '</span>' + (source.channelCharacteristics ? ' · ' + source.channelCharacteristics : '') + '</div>' : ''}
                                     
-                                    ${isRisky && riskReason ? `
-                                        <div class="risk-reason">
-                                            <strong>⚠️ 주의:</strong> ${riskReason}
-                                        </div>
-                                    ` : ''}
+                                    ${isRisky && riskReason ? '<div class="risk-reason"><strong>⚠️ 주의:</strong> ' + riskReason + '</div>' : ''}
                                     
-                                    ${source.warning ? `
-                                        <div class="source-warning">⚠️ ${source.warning}</div>
-                                    ` : ''}
+                                    ${source.warning ? '<div class="source-warning">⚠️ ' + source.warning + '</div>' : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -1164,12 +1070,7 @@ margin-bottom: 15px;
             result.classList.add('show');
         }
 
-        function calculateSourceStats(sources) {
-            const outletCount = {};
-            const typeCount = {};
-            
-            sources.forEach(source => {
-        function calculateSourceStats(sources) {
+                function calculateSourceStats(sources) {
             const outletCount = {};
             const typeCount = {};
             
