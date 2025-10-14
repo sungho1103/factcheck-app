@@ -665,6 +665,88 @@ margin-bottom: 15px;
             border: 1px solid #f5c6cb;
         }
     </style>
+        .risky-source {
+            border-left: 4px solid #ef4444 !important;
+            background: #fef2f2 !important;
+        }
+        
+        .risk-badge {
+            display: inline-block;
+            background: #ef4444;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .risk-reason {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #991b1b;
+        }
+        
+        .channel-info {
+            margin-top: 8px;
+            padding: 8px;
+            background: #f0f9ff;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #075985;
+        }
+        
+        .channel-type {
+            font-weight: 600;
+        }
+        
+        .bias-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        
+        .bias-badge.extreme-progressive {
+            background: #1e40af;
+            color: white;
+        }
+        
+        .bias-badge.progressive {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .bias-badge.center-progressive {
+            background: #93c5fd;
+            color: #1e3a8a;
+        }
+        
+        .bias-badge.neutral {
+            background: #d1d5db;
+            color: #374151;
+        }
+        
+        .bias-badge.center-conservative {
+            background: #fca5a5;
+            color: #7f1d1d;
+        }
+        
+        .bias-badge.conservative {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .bias-badge.extreme-conservative {
+            background: #991b1b;
+            color: white;
+        }
 </head>
 <body>
     <div class="container">
@@ -988,6 +1070,7 @@ margin-bottom: 15px;
             }
 
             // 참고 출처 (제일 하단)
+            // 참고 출처 (제일 하단)
             if (data.sources && data.sources.length > 0) {
                 html += `
                     <div class="sources">
@@ -996,27 +1079,50 @@ margin-bottom: 15px;
                             const credibility = source.credibility || '중간';
                             const credClass = credibility === '높음' ? 'high' : credibility === '중간' ? 'medium' : 'low';
                             const reliability = source.reliability || 0;
-                            const displayName = source.type === '유튜브' && source.channelName ? 
+                            const isYouTube = source.type === '유튜브';
+                            const displayName = isYouTube && source.channelName ? 
                                 source.channelName : (source.outlet || '출처 미상');
                             
+                            // 7단계 정치 성향
+                            const channelBias = source.channelBias || source.bias || '';
                             let biasClass = '';
-                            let biasText = '';
-                            if (source.outletBias === '보수') {
-                                biasClass = 'conservative';
-                                biasText = '보수';
-                            } else if (source.outletBias === '진보') {
+                            let biasEmoji = '';
+                            
+                            if (channelBias === '극진보') {
+                                biasClass = 'extreme-progressive';
+                                biasEmoji = '🔵🔵';
+                            } else if (channelBias === '진보') {
                                 biasClass = 'progressive';
-                                biasText = '진보';
-                            } else if (source.outletBias === '중립') {
+                                biasEmoji = '🔵';
+                            } else if (channelBias === '중도진보') {
+                                biasClass = 'center-progressive';
+                                biasEmoji = '🔵';
+                            } else if (channelBias === '중립') {
                                 biasClass = 'neutral';
-                                biasText = '중립';
+                                biasEmoji = '⚪';
+                            } else if (channelBias === '중도보수') {
+                                biasClass = 'center-conservative';
+                                biasEmoji = '🔴';
+                            } else if (channelBias === '보수') {
+                                biasClass = 'conservative';
+                                biasEmoji = '🔴';
+                            } else if (channelBias === '극보수') {
+                                biasClass = 'extreme-conservative';
+                                biasEmoji = '🔴🔴';
                             }
                             
+                            // 위험 채널 표시
+                            const isRisky = source.isRisky === true;
+                            const riskReason = source.riskReason || '';
+                            
                             return `
-                                <div class="source-item">
+                                <div class="source-item ${isRisky ? 'risky-source' : ''}">
+                                    ${isRisky ? `<div class="risk-badge">⚠️ 주의 필요</div>` : ''}
+                                    
                                     <div class="source-header">
                                         <div class="source-title">
-                                            <a href="${source.url || '#'}" target="_blank">${source.title || '제목 없음'}</a>
+                                            ${isYouTube && isRisky ? '⚠️ ' : ''}
+                                            <a href="${source.url || '#'}" target="_blank">${source.title || displayName}</a>
                                         </div>
                                         <div class="source-reliability">
                                             <span class="reliability-badge reliability-${credClass}">
@@ -1024,11 +1130,26 @@ margin-bottom: 15px;
                                             </span>
                                         </div>
                                     </div>
+                                    
                                     <div class="source-meta">
-                                        ${displayName}
-                                        ${biasText ? `<span class="outlet-badge ${biasClass}">${biasText}</span>` : ''}
+                                        ${isYouTube ? '📺 ' : ''}${displayName}
+                                        ${channelBias ? `<span class="bias-badge ${biasClass}">${biasEmoji} ${channelBias}</span>` : ''}
                                          · ${source.type || '일반'} · ${source.date || '날짜 미상'}
                                     </div>
+                                    
+                                    ${isYouTube && source.channelType ? `
+                                        <div class="channel-info">
+                                            <span class="channel-type">${source.channelType}</span>
+                                            ${source.channelCharacteristics ? ` · ${source.channelCharacteristics}` : ''}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${isRisky && riskReason ? `
+                                        <div class="risk-reason">
+                                            <strong>⚠️ 주의:</strong> ${riskReason}
+                                        </div>
+                                    ` : ''}
+                                    
                                     ${source.warning ? `
                                         <div class="source-warning">⚠️ ${source.warning}</div>
                                     ` : ''}
@@ -1043,6 +1164,11 @@ margin-bottom: 15px;
             result.classList.add('show');
         }
 
+        function calculateSourceStats(sources) {
+            const outletCount = {};
+            const typeCount = {};
+            
+            sources.forEach(source => {
         function calculateSourceStats(sources) {
             const outletCount = {};
             const typeCount = {};
