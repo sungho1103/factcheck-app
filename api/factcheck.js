@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { claim } = req.body;
+  const { claim, includeYouTube } = req.body;
 
   if (!claim) {
     return res.status(400).json({ error: 'Claim is required' });
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     console.log('팩트체크 시작:', claim);
-    console.log('사용 모델: gpt-4o-mini');
+    console.log('YouTube 검색:', includeYouTube ? '포함' : '미포함');
     
     if (!process.env.NAVER_CLIENT_ID || !process.env.NAVER_CLIENT_SECRET) {
       throw new Error('네이버 API 키가 설정되지 않았습니다.');
@@ -31,6 +31,7 @@ export default async function handler(req, res) {
       throw new Error('OpenAI API 키가 설정되지 않았습니다.');
     }
 
+    // 네이버 뉴스 검색
     console.log('네이버 검색 시작...');
     const newsResponse = await fetch(
       `https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(claim)}&display=20&sort=date`,
@@ -49,7 +50,64 @@ export default async function handler(req, res) {
     const newsData = await newsResponse.json();
     console.log('네이버 검색 결과:', newsData.total, '건');
     
-    if (!newsData.items || newsData.items.length === 0) {
+    let searchResults = '';
+    let youtubeResults = '';
+    
+    // 네이버 뉴스 결과 포맷팅
+    if (newsData.items && newsData.items.length > 0) {
+      searchResults = newsData.items.map((item, idx) => {
+        const title = item.title.replace(/<[^>]*>/g, '');
+        const description = item.description.replace(/<[^>]*>/g, '');
+        
+        return `[뉴스 출처 ${idx + 1}]
+제목: ${title}
+설명: ${description}
+URL: ${item.originallink || item.link}
+발행일: ${item.pubDate}
+---`;
+      }).join('\n\n');
+    }
+
+    // YouTube 검색 (옵션)
+    if (includeYouTube && process.env.YOUTUBE_API_KEY) {
+      try {
+        console.log('YouTube 검색 시작...');
+        const youtubeResponse = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(claim)}&type=video&maxResults=10&order=relevance&key=${process.env.YOUTUBE_API_KEY}`
+        );
+
+        if (youtubeResponse.ok) {
+          const youtubeData = await youtubeResponse.json();
+          console.log('YouTube 검색 결과:', youtubeData.items?.length || 0, '건');
+          
+          if (youtubeData.items && youtubeData.items.length > 0) {
+            youtubeResults = youtubeData.items.map((item, idx) => {
+              const snippet = item.snippet;
+              return `[유튜브 ${idx + 1}]
+채널: ${snippet.channelTitle}
+제목: ${snippet.title}
+설명: ${snippet.description}
+업로드: ${snippet.publishedAt}
+URL: https://www.youtube.com/watch?v=${item.id.videoId}
+---`;
+            }).join('\n\n');
+          }
+        } else {
+          console.error('YouTube API 오류:', youtubeResponse.status);
+        }
+      } catch (ytError) {
+        console.error('YouTube 검색 오류:', ytError);
+        // YouTube 오류는 무시하고 계속 진행
+      }
+    }
+
+    // 검색 결과 통합
+    const combinedResults = [
+      searchResults,
+      youtubeResults ? `\n\n=== YouTube 검색 결과 ===\n\n${youtubeResults}` : ''
+    ].filter(Boolean).join('');
+
+    if (!combinedResults) {
       return res.status(200).json({
         content: [
           {
@@ -57,7 +115,7 @@ export default async function handler(req, res) {
             text: JSON.stringify({
               verdict: "확인 불가",
               confidence: 0,
-              summary: "관련 뉴스를 찾을 수 없습니다.",
+              summary: "관련 정보를 찾을 수 없습니다.",
               details: "검색 결과가 없어 팩트체크를 진행할 수 없습니다.",
               politicalBias: 5,
               biasExplanation: "데이터 부족으로 분석 불가",
@@ -76,18 +134,6 @@ export default async function handler(req, res) {
         ]
       });
     }
-    
-    const searchResults = newsData.items.map((item, idx) => {
-      const title = item.title.replace(/<[^>]*>/g, '');
-      const description = item.description.replace(/<[^>]*>/g, '');
-      
-      return `[출처 ${idx + 1}]
-제목: ${title}
-설명: ${description}
-URL: ${item.originallink || item.link}
-발행일: ${item.pubDate}
----`;
-    }).join('\n\n');
 
     console.log('OpenAI 분석 시작... (모델: gpt-4o-mini)');
 
@@ -138,11 +184,6 @@ URL: ${item.originallink || item.link}
       "date": "2024-10-01",
       "event": "구체적인 사건 내용",
       "source": "출처명"
-    },
-    {
-      "date": "2024-10-05",
-      "event": "다음 사건",
-      "source": "출처명"
     }
   ],
   "misinformationSources": [
@@ -158,46 +199,21 @@ URL: ${item.originallink || item.link}
 
 필수 규칙:
 1. outlet은 검색 결과에서 실제 언론사/채널 이름 추출
-   - 언론사: 조선일보, KBS, 연합뉴스, YTN, SBS, 한겨레, 경향신문
-   - 유튜브: "가로세로연구소", "신의한수", "김어준의 다스뵈이다" 등 채널명
-   - SNS: "디시인사이드 정치갤러리", "일베", "클리앙" 등
-
-2. type은 반드시 다음 중 하나:
-   - "주요언론": KBS, MBC, SBS, 연합뉴스, 조선일보, 중앙일보, 동아일보, 한겨레, 경향신문
-   - "온라인매체": 오마이뉴스, 프레시안, 미디어오늘, 뉴스타파
-   - "정부기관": 청와대, 국회, 법무부, 경찰청 등 공식 발표
-   - "연구소": 한국정치학회, 여론조사기관, 싱크탱크
-   - "유튜브": 유튜브 채널 (channelName 필수)
-   - "SNS": 트위터, 페이스북, 커뮤니티 사이트
-
-3. bias (정치적 성향) 필수:
-   - "극진보", "진보", "중도진보", "중립", "중도보수", "보수", "극보수"
-   - 유튜브/SNS: 극단적인 경우 "극우", "극좌" 명시
-
-4. channelName (유튜브인 경우):
-   - type이 "유튜브"일 때 반드시 채널명 포함
-   - 예: "가로세로연구소", "신의한수", "김어준의 다스뵈이다"
-
+2. type은 반드시: "주요언론", "온라인매체", "정부기관", "연구소", "유튜브", "SNS" 중 하나
+3. bias (정치적 성향): "극진보", "진보", "중도진보", "중립", "중도보수", "보수", "극보수"
+4. 유튜브의 경우 channelName 필수 포함
 5. timeline은 최소 2개 이상의 이벤트 포함
-6. date는 YYYY-MM-DD 형식
-7. reliability는 0-100 사이 실제 숫자
-8. credibility는 반드시 "높음", "중간", "낮음" 중 하나
-
-한국 주요 매체의 일반적인 성향:
-- 보수: 조선일보, 중앙일보, 동아일보, TV조선, 채널A
-- 진보: 한겨레, 경향신문, 오마이뉴스, 프레시안
-- 중립: 연합뉴스, KBS (공영방송)
-- 유튜브는 각 채널의 실제 성향 반영`
+6. date는 YYYY-MM-DD 형식`
           },
           {
             role: "user",
             content: `검증할 주장: ${claim}
 
-네이버 뉴스 검색 결과 (${newsData.items.length}건):
-${searchResults}
+${includeYouTube ? '네이버 뉴스 + YouTube 통합 검색 결과:' : '네이버 뉴스 검색 결과:'}
+${combinedResults}
 
 위 검색 결과를 분석하여:
-1. 각 기사의 언론사/채널 이름을 정확히 추출
+1. 각 기사/영상의 언론사/채널 이름을 정확히 추출
 2. 각 출처의 정치적 성향(bias) 평가
 3. 유튜브는 채널명(channelName) 반드시 포함
 4. 시간순으로 사건을 정리 (최소 2개)
