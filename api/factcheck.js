@@ -72,8 +72,53 @@ URL: ${item.originallink || item.link}
     if (includeYouTube && process.env.YOUTUBE_API_KEY) {
       try {
         console.log('YouTube 검색 시작...');
+        
+        // Quota 차감 (Redis)
+        if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+          const today = new Date().toISOString().split('T')[0];
+          const quotaKey = `youtube:quota:${today}`;
+          
+          // 현재 사용량 확인
+          const getResponse = await fetch(
+            `${process.env.UPSTASH_REDIS_REST_URL}/get/${quotaKey}`,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`
+              }
+            }
+          );
+          const getData = await getResponse.json();
+          const usedCount = getData.result ? parseInt(getData.result) : 0;
+          
+          if (usedCount >= 99) {
+            console.log('YouTube quota 초과');
+            throw new Error('YouTube API quota 초과');
+          }
+          
+          // Quota 증가
+          await fetch(
+            `${process.env.UPSTASH_REDIS_REST_URL}/incr/${quotaKey}`,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`
+              }
+            }
+          );
+          
+          // 만료 시간 설정 (24시간)
+          await fetch(
+            `${process.env.UPSTASH_REDIS_REST_URL}/expire/${quotaKey}/86400`,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`
+              }
+            }
+          );
+        }
+
+        // YouTube 영상 검색
         const youtubeResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(claim)}&type=video&maxResults=10&order=relevance&key=${process.env.YOUTUBE_API_KEY}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(claim)}&type=video&maxResults=20&order=relevance&key=${process.env.YOUTUBE_API_KEY}`
         );
 
         if (youtubeResponse.ok) {
@@ -81,16 +126,52 @@ URL: ${item.originallink || item.link}
           console.log('YouTube 검색 결과:', youtubeData.items?.length || 0, '건');
           
           if (youtubeData.items && youtubeData.items.length > 0) {
-            youtubeResults = youtubeData.items.map((item, idx) => {
-              const snippet = item.snippet;
-              return `[유튜브 ${idx + 1}]
-채널: ${snippet.channelTitle}
+            // 채널 ID 수집
+            const channelIds = [...new Set(youtubeData.items.map(item => item.snippet.channelId))];
+            
+            // 채널 상세 정보 조회 (구독자 수 포함)
+            const channelResponse = await fetch(
+              `https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=${channelIds.join(',')}&key=${process.env.YOUTUBE_API_KEY}`
+            );
+            
+            const channelData = await channelResponse.json();
+            const channelMap = {};
+            
+            if (channelData.items) {
+              channelData.items.forEach(channel => {
+                channelMap[channel.id] = {
+                  subscriberCount: parseInt(channel.statistics.subscriberCount || 0),
+                  title: channel.snippet.title
+                };
+              });
+            }
+            
+            // 구독자 10k+ 필터링
+            const filteredVideos = youtubeData.items.filter(item => {
+              const channelInfo = channelMap[item.snippet.channelId];
+              return channelInfo && channelInfo.subscriberCount >= 10000;
+            });
+            
+            console.log('구독자 10k+ 필터링 후:', filteredVideos.length, '건');
+            
+            if (filteredVideos.length > 0) {
+              youtubeResults = filteredVideos.slice(0, 10).map((item, idx) => {
+                const snippet = item.snippet;
+                const channelInfo = channelMap[item.snippet.channelId];
+                const subscribers = channelInfo.subscriberCount;
+                const subscribersFormatted = subscribers >= 1000000 
+                  ? `${(subscribers / 1000000).toFixed(1)}M`
+                  : `${(subscribers / 1000).toFixed(0)}K`;
+                
+                return `[유튜브 ${idx + 1}]
+채널: ${snippet.channelTitle} (구독자 ${subscribersFormatted})
 제목: ${snippet.title}
 설명: ${snippet.description}
 업로드: ${snippet.publishedAt}
 URL: https://www.youtube.com/watch?v=${item.id.videoId}
 ---`;
-            }).join('\n\n');
+              }).join('\n\n');
+            }
           }
         } else {
           console.error('YouTube API 오류:', youtubeResponse.status);
@@ -104,7 +185,7 @@ URL: https://www.youtube.com/watch?v=${item.id.videoId}
     // 검색 결과 통합
     const combinedResults = [
       searchResults,
-      youtubeResults ? `\n\n=== YouTube 검색 결과 ===\n\n${youtubeResults}` : ''
+      youtubeResults ? `\n\n=== YouTube 검색 결과 (구독자 10k 이상) ===\n\n${youtubeResults}` : ''
     ].filter(Boolean).join('');
 
     if (!combinedResults) {
@@ -168,7 +249,7 @@ URL: https://www.youtube.com/watch?v=${item.id.videoId}
   },
   "sources": [
     {
-      "title": "실제 기사 제목",
+      "title": "실제 기사/영상 제목",
       "url": "https://실제URL",
       "date": "2024-10-10",
       "outlet": "조선일보",
@@ -176,7 +257,7 @@ URL: https://www.youtube.com/watch?v=${item.id.videoId}
       "type": "주요언론",
       "reliability": 85,
       "bias": "보수",
-      "channelName": "채널명"
+      "channelName": "채널명 (유튜브인 경우)"
     }
   ],
   "timeline": [
@@ -188,7 +269,7 @@ URL: https://www.youtube.com/watch?v=${item.id.videoId}
   ],
   "misinformationSources": [
     {
-      "platform": "특정 플랫폼명 또는 채널명",
+      "platform": "실제 채널명 또는 플랫폼명",
       "description": "어떤 거짓정보가 퍼졌는지",
       "bias": "극우" 또는 "극좌" 또는 "중립"
     }
@@ -198,27 +279,29 @@ URL: https://www.youtube.com/watch?v=${item.id.videoId}
 }
 
 필수 규칙:
-1. outlet은 검색 결과에서 실제 언론사/채널 이름 추출
+1. outlet은 검색 결과에서 실제 언론사/채널 이름 추출 (특히 유튜브 채널명 정확히!)
 2. type은 반드시: "주요언론", "온라인매체", "정부기관", "연구소", "유튜브", "SNS" 중 하나
 3. bias (정치적 성향): "극진보", "진보", "중도진보", "중립", "중도보수", "보수", "극보수"
-4. 유튜브의 경우 channelName 필수 포함
+4. 유튜브의 경우 channelName 필수 포함 (검색 결과에 있는 실제 채널명)
 5. timeline은 최소 2개 이상의 이벤트 포함
-6. date는 YYYY-MM-DD 형식`
+6. date는 YYYY-MM-DD 형식
+7. misinformationSources의 platform에는 "특정 플랫폼"이 아닌 실제 채널명/플랫폼명 사용`
           },
           {
             role: "user",
             content: `검증할 주장: ${claim}
 
-${includeYouTube ? '네이버 뉴스 + YouTube 통합 검색 결과:' : '네이버 뉴스 검색 결과:'}
+${includeYouTube ? '네이버 뉴스 + YouTube 통합 검색 결과 (구독자 10k 이상):' : '네이버 뉴스 검색 결과:'}
 ${combinedResults}
 
 위 검색 결과를 분석하여:
-1. 각 기사/영상의 언론사/채널 이름을 정확히 추출
+1. 각 기사/영상의 언론사/채널 이름을 정확히 추출 (특히 유튜브 채널명!)
 2. 각 출처의 정치적 성향(bias) 평가
-3. 유튜브는 채널명(channelName) 반드시 포함
+3. 유튜브는 channelName 반드시 포함 (검색 결과에 나온 실제 채널명)
 4. 시간순으로 사건을 정리 (최소 2개)
 5. 각 출처의 신뢰도 평가
-6. 반드시 JSON 형식으로만 응답`
+6. misinformationSources에 실제 채널명 표시 ("특정 플랫폼"이 아닌 구체적 이름)
+7. 반드시 JSON 형식으로만 응답`
           }
         ],
         temperature: 0.2,

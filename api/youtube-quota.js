@@ -22,19 +22,46 @@ export default async function handler(req, res) {
       });
     }
 
-    // YouTube API 키가 있으면 활성화
-    // 실제 quota는 Google Cloud Console에서 확인
-    // 여기서는 하루 기본 할당량 표시
+    // Upstash Redis 확인
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      // Redis 없으면 기본값 반환
+      return res.status(200).json({
+        enabled: true,
+        remaining: 99,
+        daily_limit: 99
+      });
+    }
+
+    // 오늘 날짜 키
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const quotaKey = `youtube:quota:${today}`;
+
+    // Upstash Redis REST API로 quota 조회
+    const getResponse = await fetch(
+      `${process.env.UPSTASH_REDIS_REST_URL}/get/${quotaKey}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`
+        }
+      }
+    );
+
+    const getData = await getResponse.json();
+    const usedCount = getData.result ? parseInt(getData.result) : 0;
+    const remaining = Math.max(0, 99 - usedCount);
+
     return res.status(200).json({
       enabled: true,
-      remaining: 100, // YouTube API 하루 약 100회 검색 가능
-      daily_limit: 100
+      remaining: remaining,
+      daily_limit: 99,
+      used: usedCount
     });
     
   } catch (error) {
     console.error('Quota 조회 오류:', error);
-    return res.status(500).json({ 
-      enabled: false,
+    return res.status(200).json({ 
+      enabled: true,
+      remaining: 99,
       error: error.message 
     });
   }
