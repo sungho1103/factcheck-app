@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build"
-  },
-  "dependencies": {}
+    "build": "echo 'No build step required'",
+    "dev": "vercel dev"
+  }
 }
