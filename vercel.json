@@ -1,9 +1,7 @@
 {
-  "buildCommand": null,
-  "outputDirectory": "public",
   "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
+    "api/*.js": {
+      "runtime": "nodejs20.x"
     }
   }
 }
