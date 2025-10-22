@@ -254,11 +254,42 @@ ${searchResults}
     }
 
     const geminiData = await geminiResponse.json();
+    
+    console.log('Gemini 원본 응답:', JSON.stringify(geminiData, null, 2));
+    
     const geminiTextRaw = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    
+    console.log('Gemini 추출된 텍스트:', geminiTextRaw.substring(0, 500));
     
     // Gemini 응답에서 JSON 추출 (마크다운 코드 블록 제거)
     const geminiTextClean = geminiTextRaw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const geminiResult = JSON.parse(geminiTextClean);
+    
+    let geminiResult;
+    try {
+      geminiResult = JSON.parse(geminiTextClean);
+      console.log('Gemini JSON 파싱 성공');
+    } catch (parseError) {
+      console.error('Gemini JSON 파싱 실패:', parseError.message);
+      console.error('파싱 시도한 텍스트:', geminiTextClean.substring(0, 500));
+      
+      // 파싱 실패 시 OpenAI 결과만 반환
+      return res.status(200).json({
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              ...openaiResult,
+              crossVerification: {
+                used: false,
+                reason: "Gemini 응답 파싱 실패",
+                error: parseError.message,
+                openaiOnly: true
+              }
+            })
+          }
+        ]
+      });
+    }
     
     console.log('Gemini 분석 완료');
 
