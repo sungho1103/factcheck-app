@@ -183,10 +183,10 @@ ${searchResults}
     console.log('OpenAI 분석 완료');
 
     // Gemini 분석 (교차검증)
-    console.log('Gemini 교차검증 시작... (모델: gemini-1.5-flash)');
+    console.log('Gemini 교차검증 시작... (모델: gemini-2.5-flash-preview-05-20)');
     
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
