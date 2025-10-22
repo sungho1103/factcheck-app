@@ -826,6 +826,57 @@ margin-bottom: 15px;
                 </div>
             `;
             
+            // 교차검증 결과 (OpenAI + Gemini)
+            if (data.crossVerification && data.crossVerification.used) {
+                const cv = data.crossVerification;
+                const isAgreed = cv.agreement;
+                const bgColor = isAgreed ? '#d4edda' : '#fff3cd';
+                const borderColor = isAgreed ? '#28a745' : '#ffc107';
+                const iconEmoji = isAgreed ? '✅' : '⚠️';
+                
+                html += `
+                    <div class="cross-verification" style="background: ${bgColor}; border: 2px solid ${borderColor}; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 15px; color: #333;">
+                            ${iconEmoji} AI 교차검증 (OpenAI + Google Gemini)
+                        </h3>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 10px;">
+                                <div style="font-weight: bold; color: #667eea; margin-bottom: 5px;">🤖 OpenAI GPT-4o-mini</div>
+                                <div style="font-size: 18px; font-weight: bold; margin: 5px 0;">${cv.openai.verdict}</div>
+                                <div style="font-size: 14px; color: #666;">신뢰도: ${cv.openai.confidence}%</div>
+                            </div>
+                            
+                            <div style="background: white; padding: 15px; border-radius: 10px;">
+                                <div style="font-weight: bold; color: #4285f4; margin-bottom: 5px;">🤖 Google Gemini 1.5 Flash</div>
+                                <div style="font-size: 18px; font-weight: bold; margin: 5px 0;">${cv.gemini.verdict}</div>
+                                <div style="font-size: 14px; color: #666;">신뢰도: ${cv.gemini.confidence}%</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: white; padding: 15px; border-radius: 10px;">
+                            <div style="font-weight: bold; margin-bottom: 10px;">
+                                ${isAgreed ? '✅ 최종 판정: ' + cv.finalVerdict : '⚠️ 최종 판정: ' + cv.finalVerdict}
+                            </div>
+                            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">
+                                종합 신뢰도: ${cv.finalConfidence}%
+                            </div>
+                            <div style="font-size: 14px; line-height: 1.6;">
+                                ${cv.analysis}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (data.crossVerification && !data.crossVerification.used) {
+                html += `
+                    <div class="cross-verification" style="background: #f8f9fa; border: 2px solid #dee2e6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="font-size: 14px; color: #666;">
+                            ℹ️ 교차검증 미사용: ${data.crossVerification.reason || '검색 결과 부족'}
+                        </div>
+                    </div>
+                `;
+            }
+            
             // 검증 상태 경고
             if (data.verificationStatus && !data.verificationStatus.isVerified) {
                 html += `
