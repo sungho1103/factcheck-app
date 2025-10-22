@@ -292,6 +292,14 @@ ${searchResults}
     }
     
     console.log('Gemini 분석 완료');
+    console.log('Gemini 파싱된 결과:', JSON.stringify(geminiResult, null, 2));
+
+    // Gemini 결과 검증 및 기본값 설정
+    const geminiVerdict = geminiResult.verdict || geminiResult.판정 || "확인 불가";
+    const geminiConfidence = geminiResult.confidence || geminiResult.신뢰도 || 0;
+    
+    console.log('Gemini verdict:', geminiVerdict);
+    console.log('Gemini confidence:', geminiConfidence);
 
     // 교차검증 결과 통합
     const crossVerificationResult = {
@@ -303,19 +311,19 @@ ${searchResults}
           confidence: openaiResult.confidence
         },
         gemini: {
-          verdict: geminiResult.verdict,
-          confidence: geminiResult.confidence
+          verdict: geminiVerdict,
+          confidence: geminiConfidence
         },
-        agreement: openaiResult.verdict === geminiResult.verdict,
-        finalVerdict: openaiResult.verdict === geminiResult.verdict 
+        agreement: openaiResult.verdict === geminiVerdict,
+        finalVerdict: openaiResult.verdict === geminiVerdict 
           ? openaiResult.verdict 
           : "추가 검증 필요",
-        finalConfidence: openaiResult.verdict === geminiResult.verdict
-          ? Math.round((openaiResult.confidence + geminiResult.confidence) / 2)
-          : Math.min(openaiResult.confidence, geminiResult.confidence) - 20,
-        analysis: openaiResult.verdict === geminiResult.verdict
+        finalConfidence: openaiResult.verdict === geminiVerdict
+          ? Math.round((openaiResult.confidence + geminiConfidence) / 2)
+          : Math.min(openaiResult.confidence, geminiConfidence) - 20,
+        analysis: openaiResult.verdict === geminiVerdict
           ? "두 AI 모델이 일치하는 판정을 내렸습니다."
-          : `OpenAI는 "${openaiResult.verdict}", Gemini는 "${geminiResult.verdict}"로 판정하여 불일치합니다. 추가 검증이 필요합니다.`
+          : `OpenAI는 "${openaiResult.verdict}", Gemini는 "${geminiVerdict}"로 판정하여 불일치합니다. 추가 검증이 필요합니다.`
       }
     };
 
@@ -324,7 +332,7 @@ ${searchResults}
       crossVerificationResult.verdict = "추가 검증 필요";
       crossVerificationResult.confidence = crossVerificationResult.crossVerification.finalConfidence;
       crossVerificationResult.summary = `[교차검증 불일치] ${openaiResult.summary}`;
-      crossVerificationResult.details = `⚠️ AI 모델 간 판정 불일치\n\nOpenAI 판정: ${openaiResult.verdict} (신뢰도: ${openaiResult.confidence}%)\n${openaiResult.details}\n\n---\n\nGemini 판정: ${geminiResult.verdict} (신뢰도: ${geminiResult.confidence}%)\n${geminiResult.details}`;
+      crossVerificationResult.details = `⚠️ AI 모델 간 판정 불일치\n\nOpenAI 판정: ${openaiResult.verdict} (신뢰도: ${openaiResult.confidence}%)\n${openaiResult.details}\n\n---\n\nGemini 판정: ${geminiVerdict} (신뢰도: ${geminiConfidence}%)\n${geminiResult.details || '상세 내용 없음'}`;
     }
 
     res.status(200).json({
