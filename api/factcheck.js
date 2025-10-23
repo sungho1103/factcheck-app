@@ -227,7 +227,7 @@ ${searchResults}
           ],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 4000
+            maxOutputTokens: 8192  // Gemini 2.5의 thinking 기능 고려하여 대폭 증가
           }
         })
       }
