@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { claim } = req.body;
+  const { claim, includeYouTube = false } = req.body;
 
   if (!claim) {
     return res.status(400).json({ error: 'Claim is required' });
@@ -21,6 +21,7 @@ export default async function handler(req, res) {
 
   try {
     console.log('팩트체크 시작:', claim);
+    console.log('유튜브 검색 포함:', includeYouTube);
     
     if (!process.env.NAVER_CLIENT_ID || !process.env.NAVER_CLIENT_SECRET) {
       throw new Error('네이버 API 키가 설정되지 않았습니다.');
@@ -73,7 +74,72 @@ export default async function handler(req, res) {
       console.log('백과사전 검색 실패 (선택적 기능)');
     }
     
-    if ((!newsData.items || newsData.items.length === 0) && (!encycData.items || encycData.items.length === 0)) {
+    // 유튜브 검색 (사용자가 체크박스 선택 시)
+    let youtubeData = { items: [] };
+    let youtubeUsed = false;
+    
+    if (includeYouTube && process.env.YOUTUBE_API_KEY) {
+      console.log('유튜브 검색 시작...');
+      
+      try {
+        // YouTube Data API v3 - 검색
+        const youtubeResponse = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(claim)}&type=video,channel&maxResults=10&key=${process.env.YOUTUBE_API_KEY}`
+        );
+        
+        if (youtubeResponse.ok) {
+          youtubeData = await youtubeResponse.json();
+          console.log('유튜브 검색 결과:', youtubeData.items?.length || 0, '건');
+          youtubeUsed = true;
+          
+          // Upstash Redis 카운터 증가
+          if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+            const today = new Date().toISOString().split('T')[0];
+            const quotaKey = `youtube:quota:${today}`;
+            
+            try {
+              console.log(`📊 Redis INCR 시도: ${quotaKey}`);
+              
+              const incrResponse = await fetch(
+                `${process.env.UPSTASH_REDIS_REST_URL}/incr/${quotaKey}`,
+                {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`
+                  }
+                }
+              );
+              
+              const incrResult = await incrResponse.json();
+              console.log(`✅ Redis INCR 성공! 현재 사용량:`, incrResult.result);
+              
+              // 24시간 후 만료 설정
+              await fetch(
+                `${process.env.UPSTASH_REDIS_REST_URL}/expire/${quotaKey}/86400`,
+                {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`
+                  }
+                }
+              );
+              
+              console.log('⏰ Redis EXPIRE 설정 완료 (24시간)');
+            } catch (redisError) {
+              console.error('❌ Redis 카운터 증가 실패:', redisError);
+            }
+          } else {
+            console.log('⚠️ Redis 환경변수 미설정 - quota 카운팅 생략');
+          }
+        } else {
+          console.error('유튜브 검색 실패:', youtubeResponse.status);
+        }
+      } catch (youtubeError) {
+        console.error('유튜브 검색 오류:', youtubeError);
+      }
+    }
+    
+    if ((!newsData.items || newsData.items.length === 0) && (!encycData.items || encycData.items.length === 0) && (!youtubeData.items || youtubeData.items.length === 0)) {
       return res.status(200).json({
         content: [
           {
@@ -139,8 +205,36 @@ URL: ${item.originallink || item.link}
       }).join('\n\n');
     }
     
+    // 유튜브 검색 결과 정리
+    let youtubeResults = '';
+    if (youtubeData.items && youtubeData.items.length > 0) {
+      youtubeResults = '\n\n========== 📺 유튜브 검색 결과 (주의: 신뢰도 낮을 수 있음) ==========\n\n';
+      youtubeResults += youtubeData.items.map((item, idx) => {
+        const title = item.snippet?.title || '';
+        const description = item.snippet?.description || '';
+        const channelTitle = item.snippet?.channelTitle || '';
+        const publishedAt = item.snippet?.publishedAt || '';
+        const videoId = item.id?.videoId;
+        const channelId = item.id?.channelId;
+        const url = videoId 
+          ? `https://www.youtube.com/watch?v=${videoId}`
+          : channelId 
+            ? `https://www.youtube.com/channel/${channelId}`
+            : '';
+        
+        return `[유튜브 ${idx + 1}]
+제목: ${title}
+채널: ${channelTitle}
+설명: ${description}
+URL: ${url}
+게시일: ${publishedAt}
+---`;
+      }).join('\n\n');
+      youtubeResults += '\n\n⚠️ 유튜브 콘텐츠는 개인 의견이 많고 신뢰도가 낮을 수 있습니다. 백과사전과 뉴스를 우선하세요.\n';
+    }
+    
     // 전체 검색 결과 통합
-    const searchResults = encycResults + newsResults;
+    const searchResults = encycResults + newsResults + youtubeResults;
 
     console.log('OpenAI 분석 시작... (모델: gpt-4o-mini)');
 

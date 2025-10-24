@@ -3,7 +3,16 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "echo 'No build step required'",
-    "dev": "vercel dev"
+    "build": "vite build",
+    "dev": "vite",
+    "start": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.12"
   }
 }

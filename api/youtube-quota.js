@@ -16,6 +16,7 @@ export default async function handler(req, res) {
   try {
     // YouTube API 키 확인
     if (!process.env.YOUTUBE_API_KEY) {
+      console.log('⚠️ YouTube API 키 미설정');
       return res.status(200).json({
         enabled: false,
         remaining: 0
@@ -24,6 +25,7 @@ export default async function handler(req, res) {
 
     // Upstash Redis 확인
     if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      console.log('⚠️ Redis 환경변수 미설정 - 기본값 반환');
       // Redis 없으면 기본값 반환
       return res.status(200).json({
         enabled: true,
@@ -35,6 +37,8 @@ export default async function handler(req, res) {
     // 오늘 날짜 키
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const quotaKey = `youtube:quota:${today}`;
+    
+    console.log(`📊 Quota 조회 중: ${quotaKey}`);
 
     // Upstash Redis REST API로 quota 조회
     const getResponse = await fetch(
@@ -49,6 +53,8 @@ export default async function handler(req, res) {
     const getData = await getResponse.json();
     const usedCount = getData.result ? parseInt(getData.result) : 0;
     const remaining = Math.max(0, 99 - usedCount);
+    
+    console.log(`✅ 사용량: ${usedCount}, 잔여: ${remaining}`);
 
     return res.status(200).json({
       enabled: true,
@@ -58,7 +64,7 @@ export default async function handler(req, res) {
     });
     
   } catch (error) {
-    console.error('Quota 조회 오류:', error);
+    console.error('❌ Quota 조회 오류:', error);
     return res.status(200).json({ 
       enabled: true,
       remaining: 99,
