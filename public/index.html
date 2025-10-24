@@ -1192,7 +1192,7 @@ margin-bottom: 15px;
             const topOutlets = Object.entries(outletCount)
                 .sort((a, b) => b[1] - a[1])
                 .filter(([name]) => !youtubeChannels.find(ch => ch.name === name)) // 유튜브 제외
-                .slice(0, 3)
+                // .slice(0, 3) 제거 - 전체 언론사 표시
                 .map(([name, count]) => ({ 
                     name, 
                     count,
