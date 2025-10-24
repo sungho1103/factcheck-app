@@ -755,8 +755,8 @@ ${youtubeUsed ? '⚠️ 유튜브 검색 결과가 포함되어 있습니다. yo
       crossVerificationResult.details = `⚠️ AI 모델 간 판정 불일치\n\nOpenAI 판정: ${openaiResult.verdict} (신뢰도: ${openaiResult.confidence}%)\n${openaiResult.details}\n\n---\n\nGemini 판정: ${geminiVerdict} (신뢰도: ${geminiConfidence}%)\n${geminiResult.details || '상세 내용 없음'}`;
     }
 
-    // ===== 계층적 신뢰도 점수 계산 =====
-    console.log('계층적 신뢰도 점수 계산 시작...');
+    // ===== 신뢰도 점수 계산 =====
+    console.log('신뢰도 점수 계산 시작...');
     
     // 1. 뉴스 교차 일치도 (0-100)
     const newsScore = calculateNewsScore(newsData, openaiResult);
@@ -770,18 +770,47 @@ ${youtubeUsed ? '⚠️ 유튜브 검색 결과가 포함되어 있습니다. yo
     // 4. AI 신뢰도 (0-100)
     const aiScore = calculateAIScore(openaiResult.confidence, geminiConfidence, crossVerificationResult.crossVerification.agreement);
     
-    // 계층적 가중치 적용
-    const objectiveScore = (
-      (publicDataScore * 0.4) + 
-      (factCheckScore * 0.3)
+    // ===== 동적 가중치 재분배 =====
+    let publicDataWeight = 0.4;
+    let factCheckWeight = 0.3;
+    let newsWeight = 0.5;
+    let aiWeight = 0.5;
+    
+    // 팩트체크 결과가 없으면 가중치 재분배
+    if (factCheckScore === 0) {
+      console.log('📊 팩트체크 결과 없음 → 가중치 재분배');
+      publicDataWeight = 0.55;  // 40% → 55% (+15%)
+      factCheckWeight = 0;
+      newsWeight = 0.65;         // 50% → 65% (+15%)
+      aiWeight = 0.35;           // 50% → 35% (-15%)
+    }
+    
+    // 공공데이터도 없으면 뉴스에 집중
+    if (publicDataScore === 0 && factCheckScore === 0) {
+      console.log('📊 공공데이터와 팩트체크 모두 없음 → 뉴스/AI 중심');
+      publicDataWeight = 0;
+      factCheckWeight = 0;
+      newsWeight = 0.7;   // 대폭 증가
+      aiWeight = 0.3;
+    }
+    
+    console.log('📊 적용된 가중치:', {
+      tier1: { publicData: publicDataWeight, factCheck: factCheckWeight },
+      tier2: { news: newsWeight, ai: aiWeight }
+    });
+    
+    // 가중치 적용 (동적)
+    const factVerificationScore = (
+      (publicDataScore * publicDataWeight) + 
+      (factCheckScore * factCheckWeight)
     ) * 0.7;
     
-    const subjectiveScore = (
-      (newsScore * 0.5) + 
-      (aiScore * 0.5)
+    const crossCheckScore = (
+      (newsScore * newsWeight) + 
+      (aiScore * aiWeight)
     ) * 0.3;
     
-    const finalFactScore = Math.round(objectiveScore + subjectiveScore);
+    const finalFactScore = Math.round(factVerificationScore + crossCheckScore);
     
     console.log('신뢰도 점수 계산 완료:', {
       newsScore,
@@ -795,23 +824,36 @@ ${youtubeUsed ? '⚠️ 유튜브 검색 결과가 포함되어 있습니다. yo
     crossVerificationResult.factScore = {
       total: finalFactScore,
       breakdown: {
-        objective: {
-          score: Math.round(objectiveScore),
+        factVerification: {
+          score: Math.round(factVerificationScore),
           weight: 70,
           components: {
-            publicData: { score: publicDataScore, weight: 40 },
-            factCheck: { score: factCheckScore, weight: 30 }
+            publicData: { 
+              score: publicDataScore, 
+              weight: Math.round(publicDataWeight * 100) 
+            },
+            factCheck: { 
+              score: factCheckScore, 
+              weight: Math.round(factCheckWeight * 100) 
+            }
           }
         },
-        subjective: {
-          score: Math.round(subjectiveScore),
+        crossCheck: {
+          score: Math.round(crossCheckScore),
           weight: 30,
           components: {
-            news: { score: newsScore, weight: 50 },
-            ai: { score: aiScore, weight: 50 }
+            news: { 
+              score: newsScore, 
+              weight: Math.round(newsWeight * 100) 
+            },
+            ai: { 
+              score: aiScore, 
+              weight: Math.round(aiWeight * 100) 
+            }
           }
         }
-      }
+      },
+      dynamicWeights: factCheckScore === 0 || (publicDataScore === 0 && factCheckScore === 0)
     };
 
     res.status(200).json({

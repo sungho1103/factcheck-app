@@ -892,11 +892,13 @@ margin-bottom: 15px;
                 const totalScore = fs.total;
                 const scoreClass = totalScore >= 80 ? 'high' : totalScore >= 60 ? 'medium' : 'low';
                 const scoreColor = totalScore >= 80 ? '#28a745' : totalScore >= 60 ? '#ffc107' : '#dc3545';
+                const isDynamic = fs.dynamicWeights || false;
                 
                 html += `
                     <div class="fact-score-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px; margin-bottom: 20px; color: white;">
                         <h3 style="margin-bottom: 20px; color: white; font-size: 20px;">
                             📊 계층적 신뢰도 점수 (FactScore)
+                            ${isDynamic ? '<span style="font-size: 12px; background: rgba(255,255,255,0.3); padding: 4px 10px; border-radius: 12px; margin-left: 10px;">⚙️ 동적 가중치 적용</span>' : ''}
                         </h3>
                         
                         <div style="text-align: center; margin-bottom: 25px;">
@@ -910,39 +912,45 @@ margin-bottom: 15px;
                         
                         <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
                             <div style="font-weight: bold; margin-bottom: 15px; font-size: 16px;">
-                                Tier 1: 객관적 증거 (70% 가중치) - ${fs.breakdown.objective.score}점
+                                사실 검증 (70% 가중치) - ${fs.breakdown.factVerification.score}점
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
                                 <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
-                                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 5px;">공공데이터 일치도 (40%)</div>
-                                    <div style="font-size: 24px; font-weight: bold;">${fs.breakdown.objective.components.publicData.score}점</div>
+                                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 5px;">공공데이터 일치도 (${fs.breakdown.factVerification.components.publicData.weight}%)</div>
+                                    <div style="font-size: 24px; font-weight: bold;">${fs.breakdown.factVerification.components.publicData.score}점</div>
                                 </div>
                                 <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
-                                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 5px;">팩트체크 DB (30%)</div>
-                                    <div style="font-size: 24px; font-weight: bold;">${fs.breakdown.objective.components.factCheck.score}점</div>
+                                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 5px;">팩트체크 DB (${fs.breakdown.factVerification.components.factCheck.weight}%)</div>
+                                    <div style="font-size: 24px; font-weight: bold;">${fs.breakdown.factVerification.components.factCheck.score}점</div>
                                 </div>
                             </div>
                         </div>
                         
                         <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px;">
                             <div style="font-weight: bold; margin-bottom: 15px; font-size: 16px;">
-                                Tier 2: 참고용 정보 (30% 가중치) - ${fs.breakdown.subjective.score}점
+                                교차 확인 (30% 가중치) - ${fs.breakdown.crossCheck.score}점
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                 <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
-                                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 5px;">뉴스 교차검증 (50%)</div>
-                                    <div style="font-size: 24px; font-weight: bold;">${fs.breakdown.subjective.components.news.score}점</div>
+                                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 5px;">뉴스 교차검증 (${fs.breakdown.crossCheck.components.news.weight}%)</div>
+                                    <div style="font-size: 24px; font-weight: bold;">${fs.breakdown.crossCheck.components.news.score}점</div>
                                 </div>
                                 <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
-                                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 5px;">AI 신뢰도 (50%)</div>
-                                    <div style="font-size: 24px; font-weight: bold;">${fs.breakdown.subjective.components.ai.score}점</div>
+                                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 5px;">AI 신뢰도 (${fs.breakdown.crossCheck.components.ai.weight}%)</div>
+                                    <div style="font-size: 24px; font-weight: bold;">${fs.breakdown.crossCheck.components.ai.score}점</div>
                                 </div>
                             </div>
                         </div>
                         
+                        ${isDynamic ? `
+                            <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.25); border-radius: 8px; font-size: 12px; line-height: 1.5;">
+                                ⚙️ <strong>동적 가중치:</strong> 일부 데이터 소스가 없어서 가중치를 자동으로 재분배했습니다.
+                            </div>
+                        ` : ''}
+                        
                         <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.2); border-radius: 8px; font-size: 13px; line-height: 1.6;">
                             💡 <strong>점수 해석:</strong><br>
-                            • 80점 이상: 높은 신뢰도 - 여러 객관적 증거로 뒷받침됨<br>
+                            • 80점 이상: 높은 신뢰도 - 여러 검증된 출처로 뒷받침됨<br>
                             • 60-79점: 중간 신뢰도 - 일부 증거 확인됨<br>
                             • 60점 미만: 낮은 신뢰도 - 추가 검증 필요
                         </div>
