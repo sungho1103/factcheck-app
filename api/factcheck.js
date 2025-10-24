@@ -318,7 +318,7 @@ ${searchResults}
 위 검색 결과를 분석하여 JSON 형식으로 응답하세요.`
           }
         ],
-        temperature: 0.1,  // 더 보수적이고 일관된 판단을 위해 낮춤
+        temperature: 0.5,  // 적절한 균형: 일관성과 유연성
         max_tokens: 4000,
         response_format: { type: "json_object" }
       })
@@ -390,7 +390,7 @@ ${searchResults}
             }
           ],
           generationConfig: {
-            temperature: 0.1,  // 더 보수적이고 일관된 판단을 위해 낮춤
+            temperature: 0.5,  // 적절한 균형: 일관성과 유연성
             maxOutputTokens: 8192  // Gemini 2.5의 thinking 기능 고려하여 대폭 증가
           }
         })
