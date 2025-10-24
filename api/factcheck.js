@@ -1,3 +1,104 @@
+// ===== 계층적 신뢰도 점수 계산 함수들 =====
+
+// 1. 뉴스 교차 일치도 계산 (0-100)
+function calculateNewsScore(newsData, aiResult) {
+  if (!newsData.items || newsData.items.length === 0) return 0;
+  
+  const sources = aiResult.sources || [];
+  const totalNews = newsData.items.length;
+  
+  // 뉴스 수가 많을수록 신뢰도 상승 (최대 30점)
+  const volumeScore = Math.min(30, (totalNews / 10) * 30);
+  
+  // 주요 언론 비율 (최대 40점)
+  const mainStreamOutlets = ['연합뉴스', 'KBS', 'MBC', 'SBS', 'JTBC'];
+  const mainStreamCount = sources.filter(s => 
+    mainStreamOutlets.some(outlet => s.outlet?.includes(outlet))
+  ).length;
+  const qualityScore = sources.length > 0 ? (mainStreamCount / sources.length) * 40 : 0;
+  
+  // 정치적 균형도 (최대 30점)
+  const biases = sources.map(s => s.bias || '중립');
+  const hasProgressive = biases.some(b => b.includes('진보'));
+  const hasConservative = biases.some(b => b.includes('보수'));
+  const hasNeutral = biases.some(b => b === '중립');
+  const balanceScore = (hasProgressive && hasConservative) || hasNeutral ? 30 : 15;
+  
+  return Math.round(volumeScore + qualityScore + balanceScore);
+}
+
+// 2. 공공데이터 일치도 계산 (현재는 백과사전으로 대체)
+function calculatePublicDataScore(encycData, aiResult) {
+  if (!encycData.items || encycData.items.length === 0) return 0;
+  
+  const totalEncyc = encycData.items.length;
+  
+  // 백과사전 존재 여부 (최대 50점)
+  const existenceScore = Math.min(50, (totalEncyc / 5) * 50);
+  
+  // 판정이 "사실"이면 추가 점수 (최대 50점)
+  const verdictBonus = aiResult.verdict === '사실' ? 50 : 
+                       aiResult.verdict === '부분적 사실' ? 25 : 0;
+  
+  return Math.round(existenceScore + verdictBonus);
+}
+
+// 3. 팩트체크 DB 일치도 계산 (0-100)
+function calculateFactCheckScore(factCheckData, aiResult) {
+  if (!factCheckData.claims || factCheckData.claims.length === 0) return 0;
+  
+  const claims = factCheckData.claims;
+  
+  // 팩트체크 존재 여부 (50점)
+  let score = 50;
+  
+  // 판정 일치도 분석
+  const ratings = claims.map(claim => {
+    const rating = claim.claimReview?.[0]?.textualRating?.toLowerCase() || '';
+    
+    // 긍정적 판정
+    if (rating.includes('true') || rating.includes('correct') || rating.includes('사실')) {
+      return 'true';
+    }
+    // 부정적 판정
+    if (rating.includes('false') || rating.includes('incorrect') || rating.includes('거짓')) {
+      return 'false';
+    }
+    // 부분적
+    if (rating.includes('mixture') || rating.includes('부분')) {
+      return 'partial';
+    }
+    return 'unknown';
+  });
+  
+  const trueCount = ratings.filter(r => r === 'true').length;
+  const falseCount = ratings.filter(r => r === 'false').length;
+  const partialCount = ratings.filter(r => r === 'partial').length;
+  
+  // AI 판정과 비교
+  if (aiResult.verdict === '사실' && trueCount > falseCount) {
+    score += 50;
+  } else if (aiResult.verdict === '거짓' && falseCount > trueCount) {
+    score += 50;
+  } else if (aiResult.verdict === '부분적 사실' && partialCount > 0) {
+    score += 40;
+  } else {
+    score += 20; // 불일치하거나 판정 없음
+  }
+  
+  return Math.round(score);
+}
+
+// 4. AI 신뢰도 계산 (0-100)
+function calculateAIScore(openaiConfidence, geminiConfidence, agreement) {
+  const avgConfidence = (openaiConfidence + geminiConfidence) / 2;
+  const agreementBonus = agreement ? 1.0 : 0.7;
+  
+  return Math.round(avgConfidence * agreementBonus);
+}
+
+// ===== 메인 핸들러 =====
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -139,6 +240,25 @@ export default async function handler(req, res) {
       }
     }
     
+    // Google Fact Check API 검색 (API 키 불필요)
+    let factCheckData = { claims: [] };
+    console.log('Google Fact Check 검색 시작...');
+    
+    try {
+      const factCheckResponse = await fetch(
+        `https://factchecktools.googleapis.com/v1alpha1/claims:search?query=${encodeURIComponent(claim)}&languageCode=ko`
+      );
+      
+      if (factCheckResponse.ok) {
+        factCheckData = await factCheckResponse.json();
+        console.log('Google Fact Check 검색 결과:', factCheckData.claims?.length || 0, '건');
+      } else {
+        console.log('Google Fact Check 검색 실패 (선택적 기능)');
+      }
+    } catch (factCheckError) {
+      console.error('Google Fact Check 검색 오류:', factCheckError);
+    }
+    
     if ((!newsData.items || newsData.items.length === 0) && (!encycData.items || encycData.items.length === 0) && (!youtubeData.items || youtubeData.items.length === 0)) {
       return res.status(200).json({
         content: [
@@ -233,8 +353,33 @@ URL: ${url}
       youtubeResults += '\n\n⚠️ 유튜브 콘텐츠는 개인 의견이 많고 신뢰도가 낮을 수 있습니다. 백과사전과 뉴스를 우선하세요.\n';
     }
     
+    // Google Fact Check 검색 결과 정리
+    let factCheckResults = '';
+    if (factCheckData.claims && factCheckData.claims.length > 0) {
+      factCheckResults = '\n\n========== ✅ Google Fact Check 검증 결과 (신뢰도: 높음) ==========\n\n';
+      factCheckResults += factCheckData.claims.slice(0, 5).map((claim, idx) => {
+        const text = claim.text || '';
+        const claimant = claim.claimant || '출처 미상';
+        const claimDate = claim.claimDate || '';
+        const review = claim.claimReview?.[0] || {};
+        const publisher = review.publisher?.name || '검증기관 미상';
+        const rating = review.textualRating || '판정 없음';
+        const url = review.url || '';
+        
+        return `[팩트체크 ${idx + 1}]
+주장: ${text}
+주장자: ${claimant}
+검증기관: ${publisher}
+판정: ${rating}
+URL: ${url}
+검증일: ${claimDate}
+---`;
+      }).join('\n\n');
+      factCheckResults += '\n\n✅ Google Fact Check는 전세계 팩트체크 기관의 검증 결과를 통합한 것으로 신뢰도가 높습니다.\n';
+    }
+    
     // 전체 검색 결과 통합
-    const searchResults = encycResults + newsResults + youtubeResults;
+    const searchResults = encycResults + newsResults + youtubeResults + factCheckResults;
 
     console.log('OpenAI 분석 시작... (모델: gpt-4o-mini)');
 
@@ -609,6 +754,65 @@ ${youtubeUsed ? '⚠️ 유튜브 검색 결과가 포함되어 있습니다. yo
       crossVerificationResult.summary = `[교차검증 불일치] ${openaiResult.summary}`;
       crossVerificationResult.details = `⚠️ AI 모델 간 판정 불일치\n\nOpenAI 판정: ${openaiResult.verdict} (신뢰도: ${openaiResult.confidence}%)\n${openaiResult.details}\n\n---\n\nGemini 판정: ${geminiVerdict} (신뢰도: ${geminiConfidence}%)\n${geminiResult.details || '상세 내용 없음'}`;
     }
+
+    // ===== 계층적 신뢰도 점수 계산 =====
+    console.log('계층적 신뢰도 점수 계산 시작...');
+    
+    // 1. 뉴스 교차 일치도 (0-100)
+    const newsScore = calculateNewsScore(newsData, openaiResult);
+    
+    // 2. 공공데이터 일치도 (현재는 백과사전으로 대체, 추후 확장)
+    const publicDataScore = calculatePublicDataScore(encycData, openaiResult);
+    
+    // 3. 팩트체크 DB 일치도 (0-100)
+    const factCheckScore = calculateFactCheckScore(factCheckData, openaiResult);
+    
+    // 4. AI 신뢰도 (0-100)
+    const aiScore = calculateAIScore(openaiResult.confidence, geminiConfidence, crossVerificationResult.crossVerification.agreement);
+    
+    // 계층적 가중치 적용
+    const objectiveScore = (
+      (publicDataScore * 0.4) + 
+      (factCheckScore * 0.3)
+    ) * 0.7;
+    
+    const subjectiveScore = (
+      (newsScore * 0.5) + 
+      (aiScore * 0.5)
+    ) * 0.3;
+    
+    const finalFactScore = Math.round(objectiveScore + subjectiveScore);
+    
+    console.log('신뢰도 점수 계산 완료:', {
+      newsScore,
+      publicDataScore,
+      factCheckScore,
+      aiScore,
+      finalFactScore
+    });
+    
+    // 결과에 FactScore 추가
+    crossVerificationResult.factScore = {
+      total: finalFactScore,
+      breakdown: {
+        objective: {
+          score: Math.round(objectiveScore),
+          weight: 70,
+          components: {
+            publicData: { score: publicDataScore, weight: 40 },
+            factCheck: { score: factCheckScore, weight: 30 }
+          }
+        },
+        subjective: {
+          score: Math.round(subjectiveScore),
+          weight: 30,
+          components: {
+            news: { score: newsScore, weight: 50 },
+            ai: { score: aiScore, weight: 50 }
+          }
+        }
+      }
+    };
 
     res.status(200).json({
       content: [
