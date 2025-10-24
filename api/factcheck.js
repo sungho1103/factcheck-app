@@ -309,17 +309,33 @@ URL: ${url}
       "description": "어떤 거짓정보가 퍼졌는지"
     }
   ],
+  "youtubeAnalysis": {
+    "totalChannels": 0,
+    "mainstreamMedia": 0,
+    "personalChannels": 0,
+    "extremeChannels": 0,
+    "dominantNarrative": "유튜브에서의 주요 논조",
+    "warnings": ["경고사항 배열"]
+  },
   "reasoning": "판단 근거"
-}`
+}
+
+⚠️ 중요: 유튜브 검색 결과가 있을 경우, youtubeAnalysis 필드를 반드시 포함하세요!
+- totalChannels: 검색된 총 채널 수
+- mainstreamMedia: 주요 언론 유튜브 채널 수
+- personalChannels: 개인 채널 수
+- extremeChannels: 극단적 성향 채널 수
+- dominantNarrative: 유튜브에서 주로 다루는 내용/논조
+- warnings: 유튜브 정보 관련 주의사항 배열`
           },
           {
             role: "user",
             content: `검증할 주장: ${claim}
 
-검색 결과 (네이버 백과사전 ${encycData.items?.length || 0}건 + 뉴스 ${newsData.items?.length || 0}건):
+검색 결과 (네이버 백과사전 ${encycData.items?.length || 0}건 + 뉴스 ${newsData.items?.length || 0}건${youtubeUsed ? ' + 유튜브 ' + (youtubeData.items?.length || 0) + '건' : ''}):
 ${searchResults}
 
-📚 정보 우선순위:
+${youtubeUsed ? '⚠️ 유튜브 검색 결과가 포함되어 있습니다. youtubeAnalysis 필드를 반드시 작성하세요!\n\n' : ''}📚 정보 우선순위:
 1. 백과사전 정보 > 뉴스 정보
 2. 위치, 설립일, 기본 정보는 백과사전이 가장 정확함
 3. 백과사전에 명확한 정보가 있으면 그것을 기준으로 판정
@@ -439,10 +455,10 @@ ${searchResults}
 
 검증할 주장: ${claim}
 
-검색 결과 (네이버 백과사전 ${encycData.items?.length || 0}건 + 뉴스 ${newsData.items?.length || 0}건):
+검색 결과 (네이버 백과사전 ${encycData.items?.length || 0}건 + 뉴스 ${newsData.items?.length || 0}건${youtubeUsed ? ' + 유튜브 ' + (youtubeData.items?.length || 0) + '건' : ''}):
 ${searchResults}
 
-⚠️ 중요한 원칙:
+${youtubeUsed ? '⚠️ 유튜브 검색 결과가 포함되어 있습니다. youtubeAnalysis 필드를 반드시 작성하세요!\n\n' : ''}⚠️ 중요한 원칙:
 1. 백과사전 정보 > 뉴스 정보 (위치, 설립일 등 기본 정보는 백과사전 우선)
 2. 검색 결과에 명시적으로 나온 정보만 사용하세요
 3. 이름이나 간접적 정보만으로 추론하지 마세요
@@ -468,8 +484,18 @@ ${searchResults}
     "partialTruth": 15,
     "unverified": 5
   },
+  "youtubeAnalysis": {
+    "totalChannels": 0,
+    "mainstreamMedia": 0,
+    "personalChannels": 0,
+    "extremeChannels": 0,
+    "dominantNarrative": "유튜브에서의 주요 논조",
+    "warnings": ["경고사항 배열"]
+  },
   "reasoning": "판단 근거"
-}`
+}
+
+⚠️ 중요: 유튜브 검색 결과가 있을 경우, youtubeAnalysis 필드를 반드시 포함하세요!`
                 }
               ]
             }
