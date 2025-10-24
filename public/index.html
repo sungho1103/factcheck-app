@@ -826,7 +826,7 @@ margin-bottom: 15px;
                 </div>
             `;
             
-            // 교차검증 결과 (OpenAI + Gemini)
+            // 교차검증 결과 (OpenAI + Gemini) - 토글 기능 추가
             if (data.crossVerification && data.crossVerification.used) {
                 const cv = data.crossVerification;
                 const isAgreed = cv.agreement;
@@ -837,25 +837,11 @@ margin-bottom: 15px;
                 html += `
                     <div class="cross-verification" style="background: ${bgColor}; border: 2px solid ${borderColor}; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
                         <h3 style="margin-bottom: 15px; color: #333;">
-                            ${iconEmoji} AI 교차검증 (OpenAI + Google Gemini)
+                            ${iconEmoji} 교차 검증 결과
                         </h3>
                         
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                            <div style="background: white; padding: 15px; border-radius: 10px;">
-                                <div style="font-weight: bold; color: #667eea; margin-bottom: 5px;">🤖 OpenAI GPT-4o-mini</div>
-                                <div style="font-size: 18px; font-weight: bold; margin: 5px 0;">${cv.openai.verdict}</div>
-                                <div style="font-size: 14px; color: #666;">신뢰도: ${cv.openai.confidence}%</div>
-                            </div>
-                            
-                            <div style="background: white; padding: 15px; border-radius: 10px;">
-                                <div style="font-weight: bold; color: #4285f4; margin-bottom: 5px;">🤖 Google Gemini 1.5 Flash</div>
-                                <div style="font-size: 18px; font-weight: bold; margin: 5px 0;">${cv.gemini.verdict}</div>
-                                <div style="font-size: 14px; color: #666;">신뢰도: ${cv.gemini.confidence}%</div>
-                            </div>
-                        </div>
-                        
-                        <div style="background: white; padding: 15px; border-radius: 10px;">
-                            <div style="font-weight: bold; margin-bottom: 10px;">
+                        <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                            <div style="font-weight: bold; margin-bottom: 10px; font-size: 16px;">
                                 ${isAgreed ? '✅ 최종 판정: ' + cv.finalVerdict : '⚠️ 최종 판정: ' + cv.finalVerdict}
                             </div>
                             <div style="font-size: 14px; color: #666; margin-bottom: 10px;">
@@ -863,6 +849,29 @@ margin-bottom: 15px;
                             </div>
                             <div style="font-size: 14px; line-height: 1.6;">
                                 ${cv.analysis}
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 10px;">
+                            <button onclick="toggleAIDetails()" style="background: white; color: #333; border: 1px solid #ccc; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 5px; width: 100%;">
+                                <span id="toggleIcon">▶</span>
+                                <span>AI 모델별 상세 결과 보기</span>
+                            </button>
+                            
+                            <div id="aiDetailsPanel" style="display: none; margin-top: 15px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                    <div style="background: white; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0;">
+                                        <div style="font-weight: bold; color: #667eea; margin-bottom: 5px;">🤖 OpenAI GPT-4o-mini</div>
+                                        <div style="font-size: 18px; font-weight: bold; margin: 5px 0;">${cv.openai.verdict}</div>
+                                        <div style="font-size: 14px; color: #666;">신뢰도: ${cv.openai.confidence}%</div>
+                                    </div>
+                                    
+                                    <div style="background: white; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0;">
+                                        <div style="font-weight: bold; color: #4285f4; margin-bottom: 5px;">🤖 Google Gemini 1.5 Flash</div>
+                                        <div style="font-size: 18px; font-weight: bold; margin: 5px 0;">${cv.gemini.verdict}</div>
+                                        <div style="font-size: 14px; color: #666;">신뢰도: ${cv.gemini.confidence}%</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -894,7 +903,7 @@ margin-bottom: 15px;
             // 주요 출처 통계
             if (data.sources && data.sources.length > 0) {
                 const sourceStats = calculateSourceStats(data.sources);
-                if (sourceStats.topOutlets.length > 0 || Object.keys(sourceStats.typePercentages).length > 0) {
+                if (sourceStats.topOutlets.length > 0 || Object.keys(sourceStats.typePercentages).length > 0 || sourceStats.youtubeChannels.length > 0) {
                     html += `
                         <div class="source-stats">
                             <h3>📊 주요 출처</h3>
@@ -908,6 +917,20 @@ margin-bottom: 15px;
                                     `).join('')}
                                 </div>
                             ` : ''}
+                            
+                            ${sourceStats.youtubeChannels.length > 0 ? `
+                                <div style="margin-top: 15px; padding: 15px; background: #fff9e6; border: 2px solid #ffd700; border-radius: 10px;">
+                                    <div style="font-weight: bold; color: #d97706; margin-bottom: 10px;">📺 유튜브 채널</div>
+                                    ${sourceStats.youtubeChannels.map(channel => `
+                                        <div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 5px;">
+                                            <span style="font-weight: bold;">${channel.name}</span>
+                                            ${channel.subscribers > 0 ? `<span style="color: #666; font-size: 12px; margin-left: 10px;">구독자 ${formatSubscribers(channel.subscribers)}</span>` : ''}
+                                            ${channel.bias !== '중립' ? `<span style="margin-left: 10px; padding: 2px 8px; background: #e3f2fd; border-radius: 10px; font-size: 11px;">${channel.bias}</span>` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            
                             ${Object.keys(sourceStats.typePercentages).length > 0 ? `
                                 <div class="source-type-breakdown">
                                     ${Object.entries(sourceStats.typePercentages).map(([type, percent]) => `
@@ -1124,11 +1147,23 @@ margin-bottom: 15px;
                 function calculateSourceStats(sources) {
             const outletCount = {};
             const typeCount = {};
+            const youtubeChannels = [];
             
             sources.forEach(source => {
                 const outlet = source.type === '유튜브' && source.channelName ? 
                     source.channelName : (source.outlet || '출처 미상');
                 const type = source.type || '일반';
+                
+                // 유튜브 채널 별도 저장
+                if (source.type === '유튜브' && source.channelName) {
+                    if (!youtubeChannels.find(ch => ch.name === source.channelName)) {
+                        youtubeChannels.push({
+                            name: source.channelName,
+                            subscribers: source.channelSubscribers || 0,
+                            bias: source.channelBias || '중립'
+                        });
+                    }
+                }
                 
                 if (outlet !== '출처 미상') {
                     outletCount[outlet] = (outletCount[outlet] || 0) + 1;
@@ -1141,6 +1176,7 @@ margin-bottom: 15px;
 
             const topOutlets = Object.entries(outletCount)
                 .sort((a, b) => b[1] - a[1])
+                .filter(([name]) => !youtubeChannels.find(ch => ch.name === name)) // 유튜브 제외
                 .slice(0, 3)
                 .map(([name, count]) => ({ name, count }));
 
@@ -1150,7 +1186,7 @@ margin-bottom: 15px;
                 typePercentages[type] = Math.round((count / total) * 100);
             });
 
-            return { topOutlets, typePercentages };
+            return { topOutlets, typePercentages, youtubeChannels };
         }
 
         function createScoreBar(label, value, type) {
@@ -1167,6 +1203,30 @@ margin-bottom: 15px;
                     </div>
                 </div>
             `;
+        }
+        
+        function formatSubscribers(count) {
+            if (count >= 1000000) {
+                return (count / 1000000).toFixed(1) + '만';
+            } else if (count >= 10000) {
+                return (count / 10000).toFixed(1) + '만';
+            } else if (count >= 1000) {
+                return (count / 1000).toFixed(1) + 'K';
+            }
+            return count.toString();
+        }
+
+        function toggleAIDetails() {
+            const panel = document.getElementById('aiDetailsPanel');
+            const icon = document.getElementById('toggleIcon');
+            
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                icon.textContent = '▼';
+            } else {
+                panel.style.display = 'none';
+                icon.textContent = '▶';
+            }
         }
 
         checkButton.addEventListener('click', checkFact);
