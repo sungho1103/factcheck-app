@@ -277,11 +277,20 @@ URL: ${url}
     "unverified": 5
   },
   "sources": [
+    ⚠️ 중요: sources 배열에는 반드시 검색 결과에서 실제로 참고한 뉴스/백과사전/유튜브의 제목과 URL을 포함하세요!
+    각 source는 다음 정보를 포함해야 합니다:
+    - title: 검색 결과의 실제 제목 (정확히 복사)
+    - url: 검색 결과의 URL (절대 '#'이나 빈 값 금지, 실제 https://로 시작하는 URL만)
+    - outlet: 언론사명 또는 채널명
+    - date: 발행일
+    - type: "주요언론", "백과사전", "유튜브" 등
+    
+    예시:
     {
-      "title": "실제 기사 제목",
-      "url": "https://실제URL",
+      "title": "윤석열 대통령 탄핵안 가결",
+      "url": "https://n.news.naver.com/article/001/0014567890",
       "date": "2024-10-10",
-      "outlet": "조선일보",
+      "outlet": "연합뉴스",
       "credibility": "높음",
       "type": "주요언론",
       "reliability": 85
@@ -334,6 +343,82 @@ ${searchResults}
     const openaiResult = JSON.parse(openaiData.choices[0].message.content);
     
     console.log('OpenAI 분석 완료');
+    
+    // ✅ OpenAI가 sources에 URL을 포함시키지 않았을 경우 원본 검색 결과와 매칭
+    if (openaiResult.sources && Array.isArray(openaiResult.sources)) {
+      openaiResult.sources = openaiResult.sources.map(source => {
+        // 이미 URL이 있으면 그대로 반환
+        if (source.url && source.url !== '#' && source.url.startsWith('http')) {
+          return source;
+        }
+        
+        // URL이 없으면 제목으로 검색 결과에서 찾기
+        const title = source.title || '';
+        
+        // 네이버 뉴스에서 찾기
+        if (newsData.items && newsData.items.length > 0) {
+          const matchedNews = newsData.items.find(item => {
+            const itemTitle = item.title?.replace(/<[^>]*>/g, '') || '';
+            return itemTitle.includes(title) || title.includes(itemTitle);
+          });
+          
+          if (matchedNews) {
+            return {
+              ...source,
+              url: matchedNews.originallink || matchedNews.link,
+              outlet: source.outlet || matchedNews.outlet || '출처 미상'
+            };
+          }
+        }
+        
+        // 백과사전에서 찾기
+        if (encycData.items && encycData.items.length > 0) {
+          const matchedencyc = encycData.items.find(item => {
+            const itemTitle = item.title?.replace(/<[^>]*>/g, '') || '';
+            return itemTitle.includes(title) || title.includes(itemTitle);
+          });
+          
+          if (matchedencyc) {
+            return {
+              ...source,
+              url: matchedencyc.link,
+              outlet: source.outlet || '네이버 백과사전',
+              type: '백과사전'
+            };
+          }
+        }
+        
+        // 유튜브에서 찾기
+        if (youtubeData.items && youtubeData.items.length > 0) {
+          const matchedYT = youtubeData.items.find(item => {
+            const itemTitle = item.snippet?.title || '';
+            return itemTitle.includes(title) || title.includes(itemTitle);
+          });
+          
+          if (matchedYT) {
+            const videoId = matchedYT.id?.videoId;
+            const channelId = matchedYT.id?.channelId;
+            const url = videoId 
+              ? `https://www.youtube.com/watch?v=${videoId}`
+              : channelId 
+                ? `https://www.youtube.com/channel/${channelId}`
+                : '#';
+            
+            return {
+              ...source,
+              url: url,
+              type: '유튜브',
+              channelName: matchedYT.snippet?.channelTitle || source.outlet
+            };
+          }
+        }
+        
+        // 매칭 실패 시 원본 그대로 반환
+        return source;
+      });
+      
+      console.log('✅ Sources URL 매칭 완료:', openaiResult.sources.length, '개');
+    }
 
     // Gemini 분석 (교차검증)
     console.log('Gemini 교차검증 시작... (모델: gemini-2.5-flash-preview-05-20)');
