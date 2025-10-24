@@ -51,9 +51,29 @@ export default async function handler(req, res) {
     }
 
     const newsData = await newsResponse.json();
-    console.log('네이버 검색 결과:', newsData.total, '건');
+    console.log('네이버 뉴스 검색 결과:', newsData.total, '건');
     
-    if (!newsData.items || newsData.items.length === 0) {
+    // 네이버 백과사전 검색 추가
+    console.log('네이버 백과사전 검색 시작...');
+    const encycResponse = await fetch(
+      `https://openapi.naver.com/v1/search/encyc.json?query=${encodeURIComponent(claim)}&display=10`,
+      {
+        headers: {
+          'X-Naver-Client-Id': process.env.NAVER_CLIENT_ID,
+          'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET
+        }
+      }
+    );
+
+    let encycData = { items: [] };
+    if (encycResponse.ok) {
+      encycData = await encycResponse.json();
+      console.log('네이버 백과사전 검색 결과:', encycData.total || 0, '건');
+    } else {
+      console.log('백과사전 검색 실패 (선택적 기능)');
+    }
+    
+    if ((!newsData.items || newsData.items.length === 0) && (!encycData.items || encycData.items.length === 0)) {
       return res.status(200).json({
         content: [
           {
@@ -85,18 +105,42 @@ export default async function handler(req, res) {
       });
     }
     
-    // 검색 결과 정리
-    const searchResults = newsData.items.map((item, idx) => {
-      const title = item.title.replace(/<[^>]*>/g, '');
-      const description = item.description.replace(/<[^>]*>/g, '');
-      
-      return `[출처 ${idx + 1}]
+    // 백과사전 검색 결과 정리
+    let encycResults = '';
+    if (encycData.items && encycData.items.length > 0) {
+      encycResults = '\n\n========== 📚 네이버 백과사전 정보 (신뢰도 높음) ==========\n\n';
+      encycResults += encycData.items.map((item, idx) => {
+        const title = item.title.replace(/<[^>]*>/g, '');
+        const description = item.description.replace(/<[^>]*>/g, '');
+        
+        return `[백과사전 ${idx + 1}]
+제목: ${title}
+설명: ${description}
+URL: ${item.link}
+---`;
+      }).join('\n\n');
+      encycResults += '\n\n⚠️ 백과사전 정보는 뉴스보다 신뢰도가 높습니다. 위치, 날짜, 기본 정보는 백과사전을 우선하세요.\n';
+    }
+    
+    // 뉴스 검색 결과 정리
+    let newsResults = '';
+    if (newsData.items && newsData.items.length > 0) {
+      newsResults = '\n\n========== 📰 네이버 뉴스 검색 결과 ==========\n\n';
+      newsResults += newsData.items.map((item, idx) => {
+        const title = item.title.replace(/<[^>]*>/g, '');
+        const description = item.description.replace(/<[^>]*>/g, '');
+        
+        return `[뉴스 ${idx + 1}]
 제목: ${title}
 설명: ${description}
 URL: ${item.originallink || item.link}
 발행일: ${item.pubDate}
 ---`;
-    }).join('\n\n');
+      }).join('\n\n');
+    }
+    
+    // 전체 검색 결과 통합
+    const searchResults = encycResults + newsResults;
 
     console.log('OpenAI 분석 시작... (모델: gpt-4o-mini)');
 
@@ -169,8 +213,13 @@ URL: ${item.originallink || item.link}
             role: "user",
             content: `검증할 주장: ${claim}
 
-네이버 뉴스 검색 결과 (${newsData.items.length}건):
+검색 결과 (네이버 백과사전 ${encycData.items?.length || 0}건 + 뉴스 ${newsData.items?.length || 0}건):
 ${searchResults}
+
+📚 정보 우선순위:
+1. 백과사전 정보 > 뉴스 정보
+2. 위치, 설립일, 기본 정보는 백과사전이 가장 정확함
+3. 백과사전에 명확한 정보가 있으면 그것을 기준으로 판정
 
 위 검색 결과를 분석하여 JSON 형식으로 응답하세요.`
           }
@@ -211,14 +260,15 @@ ${searchResults}
 
 검증할 주장: ${claim}
 
-네이버 뉴스 검색 결과 (${newsData.items.length}건):
+검색 결과 (네이버 백과사전 ${encycData.items?.length || 0}건 + 뉴스 ${newsData.items?.length || 0}건):
 ${searchResults}
 
 ⚠️ 중요한 원칙:
-1. 검색 결과에 명시적으로 나온 정보만 사용하세요
-2. 이름이나 간접적 정보만으로 추론하지 마세요
-3. 특히 위치, 날짜, 수치 등은 명확한 출처가 있어야 합니다
-4. 확신이 없으면 "확인 불가"로 판정하세요
+1. 백과사전 정보 > 뉴스 정보 (위치, 설립일 등 기본 정보는 백과사전 우선)
+2. 검색 결과에 명시적으로 나온 정보만 사용하세요
+3. 이름이나 간접적 정보만으로 추론하지 마세요
+4. 특히 위치, 날짜, 수치 등은 명확한 출처가 있어야 합니다
+5. 확신이 없으면 "확인 불가"로 판정하세요
 5. 절대 추측하거나 가정하지 마세요
 
 예시: "서울신대"라는 이름에 "서울"이 있다고 해서 서울에 있다고 판단하지 마세요.
