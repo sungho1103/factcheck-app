@@ -909,25 +909,34 @@ margin-bottom: 15px;
                             <h3>📊 주요 출처</h3>
                             ${sourceStats.topOutlets.length > 0 ? `
                                 <div class="top-sources">
-                                    ${sourceStats.topOutlets.map(item => `
+                                    ${sourceStats.topOutlets.map(item => {
+                                        const biasInfo = simplifyBias(item.bias);
+                                        return `
                                         <div class="top-source-item">
                                             <div class="top-source-name">${item.name}</div>
                                             <div class="top-source-count">${item.count}회 인용</div>
+                                            <div style="margin-top: 5px; font-size: 13px; color: ${biasInfo.color};">
+                                                <span style="font-size: 10px;">${biasInfo.bullet}</span> ${biasInfo.label}
+                                            </div>
                                         </div>
-                                    `).join('')}
+                                    `}).join('')}
                                 </div>
                             ` : ''}
                             
                             ${sourceStats.youtubeChannels.length > 0 ? `
                                 <div style="margin-top: 15px; padding: 15px; background: #fff9e6; border: 2px solid #ffd700; border-radius: 10px;">
                                     <div style="font-weight: bold; color: #d97706; margin-bottom: 10px;">📺 유튜브 채널</div>
-                                    ${sourceStats.youtubeChannels.map(channel => `
+                                    ${sourceStats.youtubeChannels.map(channel => {
+                                        const biasInfo = simplifyBias(channel.bias);
+                                        return `
                                         <div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 5px;">
                                             <span style="font-weight: bold;">${channel.name}</span>
                                             ${channel.subscribers > 0 ? `<span style="color: #666; font-size: 12px; margin-left: 10px;">구독자 ${formatSubscribers(channel.subscribers)}</span>` : ''}
-                                            ${channel.bias !== '중립' ? `<span style="margin-left: 10px; padding: 2px 8px; background: #e3f2fd; border-radius: 10px; font-size: 11px;">${channel.bias}</span>` : ''}
+                                            <span style="margin-left: 10px; font-size: 12px; color: ${biasInfo.color};">
+                                                <span style="font-size: 10px;">${biasInfo.bullet}</span> ${biasInfo.label}
+                                            </span>
                                         </div>
-                                    `).join('')}
+                                    `}).join('')}
                                 </div>
                             ` : ''}
                             
@@ -1146,6 +1155,7 @@ margin-bottom: 15px;
 
                 function calculateSourceStats(sources) {
             const outletCount = {};
+            const outletBias = {}; // 언론사별 정치 성향 저장
             const typeCount = {};
             const youtubeChannels = [];
             
@@ -1153,6 +1163,7 @@ margin-bottom: 15px;
                 const outlet = source.type === '유튜브' && source.channelName ? 
                     source.channelName : (source.outlet || '출처 미상');
                 const type = source.type || '일반';
+                const bias = source.bias || source.channelBias || '중립';
                 
                 // 유튜브 채널 별도 저장
                 if (source.type === '유튜브' && source.channelName) {
@@ -1167,6 +1178,10 @@ margin-bottom: 15px;
                 
                 if (outlet !== '출처 미상') {
                     outletCount[outlet] = (outletCount[outlet] || 0) + 1;
+                    // 해당 언론사의 성향 저장 (첫 번째 출현한 것 사용)
+                    if (!outletBias[outlet]) {
+                        outletBias[outlet] = bias;
+                    }
                 }
                 
                 if (type !== '일반') {
@@ -1178,7 +1193,11 @@ margin-bottom: 15px;
                 .sort((a, b) => b[1] - a[1])
                 .filter(([name]) => !youtubeChannels.find(ch => ch.name === name)) // 유튜브 제외
                 .slice(0, 3)
-                .map(([name, count]) => ({ name, count }));
+                .map(([name, count]) => ({ 
+                    name, 
+                    count,
+                    bias: outletBias[name] || '중립'
+                }));
 
             const total = sources.length;
             const typePercentages = {};
@@ -1214,6 +1233,21 @@ margin-bottom: 15px;
                 return (count / 1000).toFixed(1) + 'K';
             }
             return count.toString();
+        }
+        
+        // 7단계 → 5단계 간소화 (중립은 연두색)
+        function simplifyBias(bias) {
+            const biasMap = {
+                '극진보': { label: '진보', color: '#2196f3', bullet: '●' },
+                '진보': { label: '진보', color: '#2196f3', bullet: '●' },
+                '중도진보': { label: '중도진보', color: '#64b5f6', bullet: '●' },
+                '중립': { label: '중립', color: '#8bc34a', bullet: '●' }, // 연두색
+                '중도보수': { label: '중도보수', color: '#ef5350', bullet: '●' },
+                '보수': { label: '보수', color: '#d32f2f', bullet: '●' },
+                '극보수': { label: '보수', color: '#d32f2f', bullet: '●' }
+            };
+            
+            return biasMap[bias] || { label: '중립', color: '#8bc34a', bullet: '●' };
         }
 
         function toggleAIDetails() {
